@@ -17,7 +17,7 @@ public class UsuarioController {
 
     private final UsuarioService usuarioService;
 
-    @GetMapping("/findAll")
+    @GetMapping("/user/findAll")
     public ResponseEntity<List<UsuarioModel>> findAll() {
         try {
             var result = usuarioService.findAll();
@@ -27,7 +27,7 @@ public class UsuarioController {
         }
     }
 
-    @GetMapping("findById/{id}")
+    @GetMapping("/user/findById/{id}")
     public ResponseEntity<UsuarioModel> findById(@PathVariable Long id) {
         try {
             var result = usuarioService.findById(id);
@@ -37,7 +37,7 @@ public class UsuarioController {
         }
     }
 
-    @PostMapping("/save")
+    @PostMapping("/user/save")
     public ResponseEntity<UsuarioModel> save(@RequestBody UsuarioModel usuario) {
         try {
             return new ResponseEntity<>(usuarioService.save(usuario), HttpStatus.OK);
@@ -46,7 +46,7 @@ public class UsuarioController {
         }
     }
 
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/user/delete/{id}")
     public ResponseEntity<Void> deleteById(@PathVariable Long id) {
         try {
             usuarioService.deleteById(id);
@@ -57,7 +57,7 @@ public class UsuarioController {
     }
 
 
-    @PutMapping("/update/{id}")
+    @PutMapping("/user/update/{id}")
     public ResponseEntity<UsuarioModel> update(@PathVariable Long id,
                                         @RequestBody UsuarioModel usuarioUpdated) {
         try {

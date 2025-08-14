@@ -3,6 +3,8 @@ package com.example.EstoqueManager.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.List;
+
 @Entity
 @Table (name = "usuario_table")
 @Getter
@@ -31,4 +33,8 @@ public class UsuarioModel {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Cargo cargo;
+
+    @OneToMany(mappedBy = "usuario")
+    private List<VendaModel> vendas;
+
 }
