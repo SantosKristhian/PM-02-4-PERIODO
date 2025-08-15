@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Getter
@@ -27,4 +28,8 @@ public class VendaModel {
     @JoinColumn(name = "usuario_ID", nullable = false)
     private UsuarioModel usuario;
 
-   }
+    @OneToMany(mappedBy = "venda", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ItemVendaModel> itens;
+
+
+}
