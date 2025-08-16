@@ -1,5 +1,6 @@
 package com.example.EstoqueManager.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -27,11 +28,13 @@ public class ProdutoModel {
     private Double preco;
 
     @ManyToOne
+    @JsonIgnoreProperties("produtos")
     @JoinColumn(name = "pcategoriaId", nullable = false)
     private CategoriaModel categoria;
 
     // quem alterou por último
     @ManyToOne
+    @JsonIgnoreProperties({"vendas"})
     @JoinColumn(name = "usuarioUltimaAlteracaoId")
     private UsuarioModel usuarioUltimaAlteracao;
 

@@ -1,5 +1,6 @@
 package com.example.EstoqueManager.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.List;
@@ -25,6 +26,7 @@ public class CompradorModel {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @JsonIgnoreProperties("comprador")
     @OneToMany(mappedBy = "comprador", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<VendaModel> vendas;
 }

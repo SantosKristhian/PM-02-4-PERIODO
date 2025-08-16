@@ -1,6 +1,6 @@
 package com.example.EstoqueManager.controller;
 
-import com.example.EstoqueManager.dto.CompradorRelatorioDTO;
+/*import com.example.EstoqueManager.dto.CompradorRelatorioDTO;*/
 import com.example.EstoqueManager.model.CompradorModel;
 import com.example.EstoqueManager.service.CompradorService;
 import lombok.RequiredArgsConstructor;
@@ -63,7 +63,7 @@ public class CompradorController {
         }
     }
 
-    // Endpoint do relatório
+   /* // Endpoint do relatório
     @GetMapping("/comprador/relatorio")
     public ResponseEntity<List<CompradorRelatorioDTO>> relatorioCompradores() {
         try {
@@ -71,5 +71,5 @@ public class CompradorController {
         } catch (Exception ex) {
             return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
         }
-    }
+    }*/
 }

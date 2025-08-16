@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -37,7 +38,7 @@ public class VendaService {
         boolean vendaExiste = venda.getData() == null;
 
         if (vendaExiste) {
-            venda.setData(LocalDate.now());
+            venda.setData(LocalDateTime.now());
         }
 
         if (venda.getUsuario() == null || venda.getUsuario().getId() == null) {

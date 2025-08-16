@@ -1,5 +1,6 @@
 package com.example.EstoqueManager.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -34,6 +35,7 @@ public class UsuarioModel {
     @Column(nullable = false)
     private Cargo cargo;
 
+    @JsonIgnoreProperties("usuario")
     @OneToMany(mappedBy = "usuario")
     private List<VendaModel> vendas;
 
