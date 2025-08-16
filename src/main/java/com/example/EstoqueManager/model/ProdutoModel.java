@@ -32,12 +32,12 @@ public class ProdutoModel {
     @JoinColumn(name = "pcategoriaId", nullable = false)
     private CategoriaModel categoria;
 
-    // quem alterou por último
+
     @ManyToOne
-    @JsonIgnoreProperties({"vendas"})
+    @JsonIgnoreProperties({"cpf", "idade", "login", "senha", "cargo", "vendas"})
     @JoinColumn(name = "usuarioUltimaAlteracaoId")
     private UsuarioModel usuarioUltimaAlteracao;
 
-    // quando foi alterado por último
+
     private LocalDateTime dataUltimaAlteracao;
 }

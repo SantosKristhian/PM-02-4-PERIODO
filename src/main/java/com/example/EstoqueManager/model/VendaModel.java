@@ -30,17 +30,16 @@
         private boolean ativo;
 
         @ManyToOne
-        @JsonIgnoreProperties("vendas")
+        @JsonIgnoreProperties({"cpf", "idade", "login", "senha", "cargo", "vendas"})
         @JoinColumn(name = "usuario_id", nullable = false)
         private UsuarioModel usuario;
 
         @ManyToOne
         @JsonIgnoreProperties("vendas")
-        @JoinColumn(name = "comprador_id")
         private CompradorModel comprador;
 
 
-        @JsonIgnoreProperties("venda")
+        @JsonIgnoreProperties({"venda"})
         @OneToMany(mappedBy = "venda", cascade = CascadeType.ALL, orphanRemoval = true)
         private List<ItemVendaModel> itens;
     }

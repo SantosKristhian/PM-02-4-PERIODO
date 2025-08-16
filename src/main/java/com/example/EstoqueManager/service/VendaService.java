@@ -49,10 +49,20 @@ public class VendaService {
         venda.setUsuario(usuario);
 
 
-        if (venda.getComprador() != null && venda.getComprador().getId() != null) {
-            CompradorModel comprador = compradorRepository.findById(venda.getComprador().getId())
-                    .orElseThrow(() -> new RuntimeException("Comprador não encontrado: " + venda.getComprador().getId()));
-            venda.setComprador(comprador);
+        if (venda.getComprador() != null) {
+            if (venda.getComprador().getId() != null) {
+                // Comprador existente
+                CompradorModel comprador = compradorRepository.findById(venda.getComprador().getId())
+                        .orElseThrow(() -> new RuntimeException("Comprador não encontrado: " + venda.getComprador().getId()));
+                venda.setComprador(comprador);
+            } else {
+                // Novo comprador
+                if (venda.getComprador().getCpf() == null || venda.getComprador().getEmail() == null) {
+                    throw new RuntimeException("CPF e email são obrigatórios para novo comprador");
+                }
+                CompradorModel novoComprador = compradorRepository.save(venda.getComprador());
+                venda.setComprador(novoComprador);
+            }
         } else {
             venda.setComprador(null);
         }
@@ -63,15 +73,15 @@ public class VendaService {
             ProdutoModel produto = produtoRepository.findById(item.getProduto().getId())
                     .orElseThrow(() -> new RuntimeException("Produto não encontrado: " + item.getProduto().getId()));
 
-            if (item.getQuantidade() > produto.getQuantidade()) {
+            if (item.getQuantidadeVendida() > produto.getQuantidade()) {
                 throw new RuntimeException("Estoque insuficiente para o produto: " + produto.getNome());
             }
 
-            produto.setQuantidade(produto.getQuantidade() - item.getQuantidade());
+            produto.setQuantidade(produto.getQuantidade() - item.getQuantidadeVendida());
             produtoRepository.save(produto);
             item.setPrecoVendido(produto.getPreco());
             item.setVenda(venda);
-            double subtotal = item.getQuantidade() * item.getPrecoVendido();
+            double subtotal = item.getQuantidadeVendida() * item.getPrecoVendido();
             total += subtotal;
         }
         venda.setValortotal(total);
@@ -104,7 +114,7 @@ public class VendaService {
         if (vendaAtualizada.getItens() != null && !vendaAtualizada.getItens().isEmpty()) {
             for (ItemVendaModel itemAntigo : vendaExistente.getItens()) {
                 ProdutoModel produto = itemAntigo.getProduto();
-                produto.setQuantidade(produto.getQuantidade() + itemAntigo.getQuantidade());
+                produto.setQuantidade(produto.getQuantidade() + itemAntigo.getQuantidadeVendida());
                 produtoRepository.save(produto);
             }
             vendaExistente.getItens().clear();
@@ -114,16 +124,16 @@ public class VendaService {
                 ProdutoModel produto = produtoRepository.findById(item.getProduto().getId())
                         .orElseThrow(() -> new RuntimeException("Produto não encontrado: " + item.getProduto().getId()));
 
-                if (item.getQuantidade() > produto.getQuantidade()) {
+                if (item.getQuantidadeVendida() > produto.getQuantidade()) {
                     throw new RuntimeException("Estoque insuficiente para o produto: " + produto.getNome());
                 }
 
-                produto.setQuantidade(produto.getQuantidade() - item.getQuantidade());
+                produto.setQuantidade(produto.getQuantidade() - item.getQuantidadeVendida());
                 produtoRepository.save(produto);
 
                 item.setPrecoVendido(produto.getPreco());
                 item.setVenda(vendaExistente);
-                total += item.getQuantidade() * item.getPrecoVendido();
+                total += item.getQuantidadeVendida() * item.getPrecoVendido();
 
                 vendaExistente.getItens().add(item);
             }

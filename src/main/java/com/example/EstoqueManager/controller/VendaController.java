@@ -2,6 +2,8 @@ package com.example.EstoqueManager.controller;
 
 import com.example.EstoqueManager.model.VendaModel;
 import com.example.EstoqueManager.model.UsuarioModel;
+import com.example.EstoqueManager.repository.UsuarioRepository;
+import com.example.EstoqueManager.service.UsuarioService;
 import com.example.EstoqueManager.service.VendaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,6 +18,7 @@ import java.util.List;
 public class VendaController {
 
     private final VendaService vendaService;
+    private final UsuarioRepository usuarioRepository;
 
     @GetMapping("/venda/findAll")
     public ResponseEntity<List<VendaModel>> findAll() {
@@ -41,23 +44,22 @@ public class VendaController {
             @PathVariable Long usuarioId,
             @RequestBody VendaModel venda) {
         try {
+            UsuarioModel usuario = usuarioRepository.findById(usuarioId)
+                    .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-            UsuarioModel usuario = new UsuarioModel();
-            usuario.setId(usuarioId);
             venda.setUsuario(usuario);
             VendaModel vendaSalva = vendaService.registrarVenda(venda);
-
             return new ResponseEntity<>(vendaSalva, HttpStatus.CREATED);
         } catch (RuntimeException ex) {
-
+            ex.printStackTrace(); // Adicione logging
             return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
         } catch (Exception ex) {
-
+            ex.printStackTrace(); // Adicione logging
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    @PatchMapping("/venda/update/{id}")
+    @PutMapping("/venda/update/{id}")
     public ResponseEntity<VendaModel> updateVenda(
             @PathVariable Long id,
             @RequestBody VendaModel vendaAtualizada) {

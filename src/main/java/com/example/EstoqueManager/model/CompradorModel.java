@@ -26,7 +26,7 @@ public class CompradorModel {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @JsonIgnoreProperties("comprador")
+    @JsonIgnoreProperties({"comprador"})
     @OneToMany(mappedBy = "comprador", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<VendaModel> vendas;
 }

@@ -1,5 +1,6 @@
 package com.example.EstoqueManager.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
@@ -17,7 +18,7 @@ public class ItemVendaModel {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JsonIgnoreProperties({"itens", "usuario", "comprador"})
+    @JsonIgnore
     @JoinColumn(name = "venda_id", nullable = false)
     private VendaModel venda;
 
@@ -27,9 +28,9 @@ public class ItemVendaModel {
     private ProdutoModel produto;
 
     @Column(nullable = false)
-    private Integer quantidade;
+    private Integer quantidadeVendida;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
         private Double precoVendido;
 
 }
