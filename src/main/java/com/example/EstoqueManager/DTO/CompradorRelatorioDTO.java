@@ -1,4 +1,4 @@
-package com.example.EstoqueManager.dto;
+package com.example.EstoqueManager.DTO;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

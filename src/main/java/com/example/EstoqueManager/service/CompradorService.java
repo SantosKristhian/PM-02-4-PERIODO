@@ -1,6 +1,6 @@
 package com.example.EstoqueManager.service;
 
-import com.example.EstoqueManager.dto.CompradorRelatorioDTO;
+/*import com.example.EstoqueManager.dto.CompradorRelatorioDTO;*/
 import com.example.EstoqueManager.model.CompradorModel;
 import com.example.EstoqueManager.repository.CompradorRepository;
 import lombok.RequiredArgsConstructor;
@@ -44,7 +44,7 @@ public class CompradorService {
 
         return compradorRepository.save(compradorExistente);
     }
-
+/*
     // Relatório simples
     public List<CompradorRelatorioDTO> gerarRelatorioCompradores() {
         List<CompradorModel> compradores = compradorRepository.findAll();
@@ -66,5 +66,5 @@ public class CompradorService {
                     valorTotal
             );
         }).toList();
-    }
+    }*/
 }

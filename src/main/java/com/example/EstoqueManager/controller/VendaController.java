@@ -37,43 +37,38 @@ public class VendaController {
     }
 
     @PostMapping("/venda/save/{usuarioId}")
-    public ResponseEntity<VendaModel> save(
+    public ResponseEntity<VendaModel> criarVenda(
             @PathVariable Long usuarioId,
             @RequestBody VendaModel venda) {
         try {
-            UsuarioModel usuario = new UsuarioModel();
-            usuario.setId(usuarioId); // apenas para associar
-            venda.setUsuario(usuario);
-            return new ResponseEntity<>(vendaService.registrarVenda(venda), HttpStatus.OK);
-        } catch (Exception ex) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        }
-    }
 
-    // Para atualização de venda, se necessário
-    @PutMapping("/venda/update/{id}/{usuarioId}")
-    public ResponseEntity<VendaModel> update(
-            @PathVariable Long id,
-            @PathVariable Long usuarioId,
-            @RequestBody VendaModel vendaUpdated) {
-        try {
             UsuarioModel usuario = new UsuarioModel();
             usuario.setId(usuarioId);
-            vendaUpdated.setUsuario(usuario);
+            venda.setUsuario(usuario);
+            VendaModel vendaSalva = vendaService.registrarVenda(venda);
 
-            return new ResponseEntity<>(vendaService.registrarVenda(vendaUpdated), HttpStatus.OK);
-        } catch (Exception ex) {
+            return new ResponseEntity<>(vendaSalva, HttpStatus.CREATED);
+        } catch (RuntimeException ex) {
+
             return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        } catch (Exception ex) {
+
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    @DeleteMapping("/venda/delete/{id}")
-    public ResponseEntity<Void> deleteById(@PathVariable Long id) {
+    @PatchMapping("/venda/update/{id}")
+    public ResponseEntity<VendaModel> updateVenda(
+            @PathVariable Long id,
+            @RequestBody VendaModel vendaAtualizada) {
         try {
-            // Se quiser deletar uma venda, adicione método deleteById no VendaService
-            return new ResponseEntity<>(null, HttpStatus.OK);
-        } catch (Exception ex) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        }
+            VendaModel vendaSalva = vendaService.updateVenda(id, vendaAtualizada);
+                return new ResponseEntity<>(vendaSalva, HttpStatus.OK);
+            } catch (RuntimeException ex) {
+                return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+            } catch (Exception ex) {
+                return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
     }
+
 }
