@@ -43,7 +43,8 @@ public class UsuarioController {
         try {
             return new ResponseEntity<>(usuarioService.save(usuario), HttpStatus.OK);
         } catch (Exception ex) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+            ex.printStackTrace(); // mostra no console o que está acontecendo
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
         }
     }
 
@@ -60,7 +61,7 @@ public class UsuarioController {
 
     @PutMapping("/user/update/{id}")
     public ResponseEntity<UsuarioModel> update(@PathVariable Long id,
-                                        @RequestBody UsuarioModel usuarioUpdated) {
+                                               @RequestBody UsuarioModel usuarioUpdated) {
         try {
             var result = usuarioService.updateByID(id, usuarioUpdated);
             return new ResponseEntity<>(result, HttpStatus.OK);
