@@ -17,6 +17,10 @@ public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
 
+    public UsuarioModel autenticar(String login, String senha) {
+        return usuarioRepository.findByLoginAndSenha(login, senha).orElseThrow(RuntimeException::new);
+    }
+
     public List<UsuarioModel> findAll(){
         return usuarioRepository.findAll();
     }

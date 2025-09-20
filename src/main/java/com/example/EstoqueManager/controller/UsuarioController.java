@@ -18,6 +18,16 @@ public class UsuarioController {
 
     private final UsuarioService usuarioService;
 
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody UsuarioModel usuario) {
+        UsuarioModel usuarioEncontrado = usuarioService.autenticar(usuario.getLogin(), usuario.getSenha());
+        if (usuarioEncontrado != null) {
+            return ResponseEntity.ok(usuarioEncontrado);
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Login ou senha inválidos");
+        }
+    }
+
     @GetMapping("/user/findAll")
     public ResponseEntity<List<UsuarioModel>> findAll() {
         try {
