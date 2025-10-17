@@ -2,9 +2,9 @@ package com.example.EstoqueManager.controller;
 
 import com.example.EstoqueManager.model.VendaModel;
 import com.example.EstoqueManager.model.UsuarioModel;
-import com.example.EstoqueManager.repository.UsuarioRepository;
 import com.example.EstoqueManager.service.UsuarioService;
 import com.example.EstoqueManager.service.VendaService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,99 +19,34 @@ import java.util.List;
 public class VendaController {
 
     private final VendaService vendaService;
-    private final UsuarioRepository usuarioRepository;
+    private final UsuarioService usuarioService;
 
     @GetMapping("/venda/findAll")
-    public ResponseEntity<?> findAll() {
-        try {
-            List<VendaModel> vendas = vendaService.listarVendas();
-            return ResponseEntity.ok(vendas);
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erro ao buscar vendas: " + ex.getMessage());
-        }
+    public ResponseEntity<List<VendaModel>> findAll() {
+        return ResponseEntity.ok(vendaService.listarVendas());
     }
 
     @GetMapping("/venda/findById/{id}")
-    public ResponseEntity<?> findById(@PathVariable Long id) {
-        try {
-            VendaModel venda = vendaService.buscarVendaPorId(id);
-            if (venda == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body("Venda não encontrada para o ID: " + id);
-            }
-            return ResponseEntity.ok(venda);
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erro ao buscar venda: " + ex.getMessage());
-        }
+    public ResponseEntity<VendaModel> findById(@PathVariable Long id) {
+        return ResponseEntity.ok(vendaService.buscarVendaPorId(id));
     }
 
     @PostMapping("/venda/save/{usuarioId}")
-    public ResponseEntity<?> criarVenda(
+    public ResponseEntity<VendaModel> criarVenda(
             @PathVariable Long usuarioId,
-            @RequestBody VendaModel venda) {
-        try {
-            UsuarioModel usuario = usuarioRepository.findById(usuarioId)
-                    .orElse(null);
+            @Valid @RequestBody VendaModel venda) {
 
-            if (usuario == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body("Usuário não encontrado para o ID: " + usuarioId);
-            }
+        UsuarioModel usuario = usuarioService.findById(usuarioId);
+        venda.setUsuario(usuario);
 
-            if (venda.getItens() == null || venda.getItens().isEmpty()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body("A venda deve conter ao menos um item.");
-            }
-
-            if (venda.getComprador() == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body("Comprador não informado.");
-            }
-
-            venda.setUsuario(usuario);
-            VendaModel vendaSalva = vendaService.registrarVenda(venda);
-
-            if (vendaSalva == null) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body("Erro ao salvar venda.");
-            }
-
-            return ResponseEntity.status(HttpStatus.CREATED).body(vendaSalva);
-        } catch (RuntimeException ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erro de negócio: " + ex.getMessage());
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Erro inesperado: " + ex.getMessage());
-        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(vendaService.registrarVenda(venda));
     }
 
     @PutMapping("/venda/update/{id}")
-    public ResponseEntity<?> updateVenda(
+    public ResponseEntity<VendaModel> updateVenda(
             @PathVariable Long id,
-            @RequestBody VendaModel vendaAtualizada) {
-        try {
-            VendaModel vendaExistente = vendaService.buscarVendaPorId(id);
-            if (vendaExistente == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body("Venda não encontrada para o ID: " + id);
-            }
+            @Valid @RequestBody VendaModel vendaAtualizada) {
 
-            VendaModel vendaSalva = vendaService.updateVenda(id, vendaAtualizada);
-            if (vendaSalva == null) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                        .body("Erro ao atualizar venda.");
-            }
-
-            return ResponseEntity.ok(vendaSalva);
-        } catch (RuntimeException ex) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("Erro de negócio: " + ex.getMessage());
-        } catch (Exception ex) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Erro inesperado: " + ex.getMessage());
-        }
+        return ResponseEntity.ok(vendaService.updateVenda(id, vendaAtualizada));
     }
 }

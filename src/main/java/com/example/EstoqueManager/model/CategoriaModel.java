@@ -1,9 +1,9 @@
 package com.example.EstoqueManager.model;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.util.List;
@@ -20,10 +20,12 @@ public class CategoriaModel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @NotBlank(message = "Nome da categoria é obrigatório")
+    @Size(min = 3, max = 100, message = "Nome deve ter entre 3 e 100 caracteres")
+    @Column(nullable = false, unique = true)
     private String nome;
 
-    @JsonIgnore
-    @OneToMany(mappedBy = "categoria")
+    @JsonIgnoreProperties("categoria")
+    @OneToMany(mappedBy = "categoria", cascade = CascadeType.ALL)
     private List<ProdutoModel> produtos;
 }

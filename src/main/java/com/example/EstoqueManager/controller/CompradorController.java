@@ -1,8 +1,8 @@
 package com.example.EstoqueManager.controller;
 
-/*import com.example.EstoqueManager.dto.CompradorRelatorioDTO;*/
 import com.example.EstoqueManager.model.CompradorModel;
 import com.example.EstoqueManager.service.CompradorService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,64 +14,35 @@ import java.util.List;
 @RequestMapping("/api/emanager")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:4200")
-
 public class CompradorController {
 
     private final CompradorService compradorService;
 
     @GetMapping("/comprador/findAll")
     public ResponseEntity<List<CompradorModel>> findAll() {
-        try {
-            return new ResponseEntity<>(compradorService.findAll(), HttpStatus.OK);
-        } catch (Exception ex) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        }
+        return ResponseEntity.ok(compradorService.findAll());
     }
 
     @GetMapping("/comprador/findById/{id}")
     public ResponseEntity<CompradorModel> findById(@PathVariable Long id) {
-        try {
-            return new ResponseEntity<>(compradorService.findById(id), HttpStatus.OK);
-        } catch (Exception ex) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        }
+        return ResponseEntity.ok(compradorService.findById(id));
     }
 
     @PostMapping("/comprador/save")
-    public ResponseEntity<CompradorModel> save(@RequestBody CompradorModel comprador) {
-        try {
-            return new ResponseEntity<>(compradorService.save(comprador), HttpStatus.OK);
-        } catch (Exception ex) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        }
+    public ResponseEntity<CompradorModel> save(@Valid @RequestBody CompradorModel comprador) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(compradorService.save(comprador));
     }
 
     @PutMapping("/comprador/update/{id}")
-    public ResponseEntity<CompradorModel> update(@PathVariable Long id, @RequestBody CompradorModel compradorUpdated) {
-        try {
-            return new ResponseEntity<>(compradorService.updateById(id, compradorUpdated), HttpStatus.OK);
-        } catch (Exception ex) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        }
+    public ResponseEntity<CompradorModel> update(
+            @PathVariable Long id,
+            @Valid @RequestBody CompradorModel compradorUpdated) {
+        return ResponseEntity.ok(compradorService.updateById(id, compradorUpdated));
     }
 
     @DeleteMapping("/comprador/delete/{id}")
     public ResponseEntity<Void> deleteById(@PathVariable Long id) {
-        try {
-            compradorService.deleteById(id);
-            return new ResponseEntity<>(null, HttpStatus.OK);
-        } catch (Exception ex) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        }
+        compradorService.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
-
-   /* // Endpoint do relatório
-    @GetMapping("/comprador/relatorio")
-    public ResponseEntity<List<CompradorRelatorioDTO>> relatorioCompradores() {
-        try {
-            return new ResponseEntity<>(compradorService.gerarRelatorioCompradores(), HttpStatus.OK);
-        } catch (Exception ex) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        }
-    }*/
 }

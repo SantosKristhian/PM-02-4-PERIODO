@@ -1,7 +1,9 @@
+
 package com.example.EstoqueManager.controller;
 
 import com.example.EstoqueManager.model.UsuarioModel;
 import com.example.EstoqueManager.service.UsuarioService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +15,6 @@ import java.util.List;
 @RequestMapping("/api/emanager")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "http://localhost:4200")
-
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
@@ -21,66 +22,40 @@ public class UsuarioController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody UsuarioModel usuario) {
         UsuarioModel usuarioEncontrado = usuarioService.autenticar(usuario.getLogin(), usuario.getSenha());
-        if (usuarioEncontrado != null) {
-            return ResponseEntity.ok(usuarioEncontrado);
-        } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Login ou senha inválidos");
+
+        if (usuarioEncontrado == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Login ou senha inválidos");
         }
+
+        return ResponseEntity.ok(usuarioEncontrado);
     }
 
     @GetMapping("/user/findAll")
     public ResponseEntity<List<UsuarioModel>> findAll() {
-        try {
-            var result = usuarioService.findAll();
-            return new ResponseEntity<>(result, HttpStatus.OK);
-        } catch (Exception ex) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        }
+        return ResponseEntity.ok(usuarioService.findAll());
     }
 
     @GetMapping("/user/findById/{id}")
     public ResponseEntity<UsuarioModel> findById(@PathVariable Long id) {
-        try {
-            var result = usuarioService.findById(id);
-            return new ResponseEntity<>(result, HttpStatus.OK);
-        } catch (Exception ex) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        }
+        return ResponseEntity.ok(usuarioService.findById(id));
     }
 
     @PostMapping("/user/save")
-    public ResponseEntity<UsuarioModel> save(@RequestBody UsuarioModel usuario) {
-        try {
-            return new ResponseEntity<>(usuarioService.save(usuario), HttpStatus.OK);
-        } catch (Exception ex) {
-            ex.printStackTrace(); // mostra no console o que está acontecendo
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-        }
+    public ResponseEntity<UsuarioModel> save(@Valid @RequestBody UsuarioModel usuario) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(usuarioService.save(usuario));
     }
 
     @DeleteMapping("/user/delete/{id}")
     public ResponseEntity<Void> deleteById(@PathVariable Long id) {
-        try {
-            usuarioService.deleteById(id);
-            return new ResponseEntity<>(null, HttpStatus.OK);
-        } catch (Exception ex) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        }
+        usuarioService.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
-
 
     @PutMapping("/user/update/{id}")
-    public ResponseEntity<UsuarioModel> update(@PathVariable Long id,
-                                               @RequestBody UsuarioModel usuarioUpdated) {
-        try {
-            var result = usuarioService.updateByID(id, usuarioUpdated);
-            return new ResponseEntity<>(result, HttpStatus.OK);
-        } catch (Exception ex) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        }
-
+    public ResponseEntity<UsuarioModel> update(
+            @PathVariable Long id,
+            @Valid @RequestBody UsuarioModel usuarioUpdated) {
+        return ResponseEntity.ok(usuarioService.updateByID(id, usuarioUpdated));
     }
-
-
-
 }
