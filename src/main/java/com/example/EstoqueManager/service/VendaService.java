@@ -61,10 +61,38 @@ public class VendaService {
         double total = processarItensVenda(venda);
 
         venda.setValortotal(total);
+        processarPagamento(venda);
+
         venda.setAtivo(true);
 
         return vendaRepository.save(venda);
     }
+
+    private void processarPagamento(VendaModel venda) {
+        if (venda.getMetodoPagamento() == MetodoPagamento.DINHEIRO) {
+            // Para dinheiro, o valor pago é obrigatório
+            if (venda.getValorPago() == null || venda.getValorPago() <= 0) {
+                throw new BusinessException("Valor pago é obrigatório para pagamento em dinheiro.");
+            }
+
+            // Valida se o valor pago é suficiente
+            if (venda.getValorPago() < venda.getValortotal()) {
+                throw new BusinessException(
+                        String.format("Valor pago (R$ %.2f) é insuficiente. Total da venda: R$ %.2f",
+                                venda.getValorPago(), venda.getValortotal())
+                );
+            }
+
+            // Calcula o troco automaticamente
+            venda.setTroco(venda.getValorPago() - venda.getValortotal());
+
+        } else {
+            // Para outros métodos, não há troco
+            venda.setValorPago(venda.getValortotal());
+            venda.setTroco(0.0);
+        }
+    }
+
 
     @Transactional
     public VendaModel updateVenda(Long id, VendaModel vendaAtualizada) {
@@ -116,6 +144,14 @@ public class VendaService {
             vendaExistente.setValortotal(total);
         }
 
+        // Atualiza método de pagamento
+        if (vendaAtualizada.getMetodoPagamento() != null) {
+            vendaExistente.setMetodoPagamento(vendaAtualizada.getMetodoPagamento());
+            vendaExistente.setValorPago(vendaAtualizada.getValorPago());
+            processarPagamento(vendaExistente);
+        }
+
+
         vendaExistente.setAtivo(vendaAtualizada.isAtivo());
 
         return vendaRepository.save(vendaExistente);
@@ -129,6 +165,12 @@ public class VendaService {
         if (venda.getItens() == null || venda.getItens().isEmpty()) {
             throw new BusinessException("A venda deve conter ao menos um item.");
         }
+
+        // Valida método de pagamento
+        if (venda.getMetodoPagamento() == null) {
+            throw new BusinessException("Método de pagamento é obrigatório.");
+        }
+
 
         // Valida cada item
         for (ItemVendaModel item : venda.getItens()) {
