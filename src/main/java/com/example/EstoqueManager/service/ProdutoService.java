@@ -1,7 +1,9 @@
 package com.example.EstoqueManager.service;
 
+import com.example.EstoqueManager.dto.ProdutoCurvaABCDTO;
 import com.example.EstoqueManager.exception.BusinessException;
 import com.example.EstoqueManager.exception.ResourceNotFoundException;
+import com.example.EstoqueManager.model.ItemVendaModel;
 import com.example.EstoqueManager.model.ProdutoModel;
 import com.example.EstoqueManager.model.UsuarioModel;
 import com.example.EstoqueManager.repository.CategoriaRepository;
@@ -11,7 +13,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +29,68 @@ public class ProdutoService {
     public List<ProdutoModel> findAll() {
         return produtoRepository.findAll();
     }
+
+    public List<ProdutoCurvaABCDTO> getCurvaABC() {
+        // Buscar todos os itens de venda
+        List<ItemVendaModel> itensVenda = itemVendaRepository.findAll();
+
+        // Calcular valor total vendido por produto
+        var produtosVenda = itensVenda.stream()
+                .collect(Collectors.groupingBy(
+                        item -> item.getProduto(),
+                        Collectors.summingDouble(item -> {
+                            Double preco = item.getPrecoVendido() != null
+                                    ? item.getPrecoVendido()
+                                    : item.getProduto().getPreco();
+                            return item.getQuantidadeVendida() * preco;
+                        })
+                ));
+
+        // Calcular faturamento total
+        double faturamentoTotal = produtosVenda.values().stream()
+                .mapToDouble(Double::doubleValue)
+                .sum();
+
+        if (faturamentoTotal == 0) {
+            return new ArrayList<>();
+        }
+
+        // Criar lista com percentuais
+        List<ProdutoCurvaABCDTO> listaCurvaABC = produtosVenda.entrySet().stream()
+                .map(entry -> {
+                    ProdutoModel produto = entry.getKey();
+                    Double valorTotal = entry.getValue();
+                    Double percentual = (valorTotal / faturamentoTotal) * 100;
+
+                    ProdutoCurvaABCDTO dto = new ProdutoCurvaABCDTO();
+                    dto.setId(produto.getId());
+                    dto.setNome(produto.getNome());
+                    dto.setValorTotalVendido(valorTotal);
+                    dto.setPercentualFaturamento(percentual);
+                    return dto;
+                })
+                .sorted(Comparator.comparing(ProdutoCurvaABCDTO::getValorTotalVendido).reversed())
+                .collect(Collectors.toList());
+
+        // Calcular percentual acumulado e classificação
+        double acumulado = 0;
+        for (ProdutoCurvaABCDTO dto : listaCurvaABC) {
+            acumulado += dto.getPercentualFaturamento();
+            dto.setPercentualAcumulado(acumulado);
+
+            // Classificar: A = 80%, B = 95%, C = 100%
+            if (acumulado <= 80) {
+                dto.setClassificacao("A");
+            } else if (acumulado <= 95) {
+                dto.setClassificacao("B");
+            } else {
+                dto.setClassificacao("C");
+            }
+        }
+
+        return listaCurvaABC;
+    }
+
 
     public ProdutoModel findById(Long id) {
         if (id == null || id <= 0) {

@@ -1,7 +1,9 @@
 package com.example.EstoqueManager.controller;
 
+import com.example.EstoqueManager.dto.ProdutoCurvaABCDTO;
 import com.example.EstoqueManager.model.VendaModel;
 import com.example.EstoqueManager.model.UsuarioModel;
+import com.example.EstoqueManager.service.ProdutoService;
 import com.example.EstoqueManager.service.UsuarioService;
 import com.example.EstoqueManager.service.VendaService;
 import jakarta.validation.Valid;
@@ -20,6 +22,8 @@ public class VendaController {
 
     private final VendaService vendaService;
     private final UsuarioService usuarioService;
+    private final ProdutoService produtoService;
+
 
     @GetMapping("/venda/findAll")
     public ResponseEntity<List<VendaModel>> findAll() {

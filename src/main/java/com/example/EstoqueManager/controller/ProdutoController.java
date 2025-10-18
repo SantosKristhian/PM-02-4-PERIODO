@@ -1,6 +1,7 @@
 
 package com.example.EstoqueManager.controller;
 
+import com.example.EstoqueManager.dto.ProdutoCurvaABCDTO;
 import com.example.EstoqueManager.model.ProdutoModel;
 import com.example.EstoqueManager.model.UsuarioModel;
 import com.example.EstoqueManager.service.ProdutoService;
@@ -50,6 +51,13 @@ public class ProdutoController {
         UsuarioModel usuario = usuarioService.findById(usuarioId);
         return ResponseEntity.ok(produtoService.updateByID(id, produtoUpdated, usuario));
     }
+
+    @GetMapping("produto/curva-abc")
+    public ResponseEntity<List<ProdutoCurvaABCDTO>> getCurvaABC() {
+        List<ProdutoCurvaABCDTO> curvaABC = produtoService.getCurvaABC();
+        return ResponseEntity.ok(curvaABC);
+    }
+
 
     @DeleteMapping("/produto/delete/{id}")
     public ResponseEntity<Void> deleteById(@PathVariable Long id) {
