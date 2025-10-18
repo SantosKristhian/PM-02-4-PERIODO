@@ -2,6 +2,7 @@ package com.example.EstoqueManager.service;
 
 import com.example.EstoqueManager.exception.BusinessException;
 import com.example.EstoqueManager.exception.ResourceNotFoundException;
+import com.example.EstoqueManager.model.Cargo;
 import com.example.EstoqueManager.model.UsuarioModel;
 import com.example.EstoqueManager.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
@@ -119,4 +120,14 @@ public class UsuarioService {
             throw new BusinessException("CPF é obrigatório.");
         }
     }
+
+    public boolean existemUsuarios() {
+        return usuarioRepository.count() > 0;
+    }
+
+    public boolean existeAdministrador() {
+        return usuarioRepository.findAll().stream()
+                .anyMatch(usuario -> usuario.getCargo() == Cargo.ADM);
+    }
+
 }

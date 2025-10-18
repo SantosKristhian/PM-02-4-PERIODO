@@ -46,6 +46,17 @@ public class UsuarioController {
         return ResponseEntity.status(HttpStatus.CREATED).body(usuarioService.save(usuario));
     }
 
+    @GetMapping("/user/exists")
+    public ResponseEntity<Boolean> existemUsuarios() {
+        return ResponseEntity.ok(usuarioService.existemUsuarios());
+    }
+
+    @GetMapping("/user/exists-admin")
+    public ResponseEntity<Boolean> existeAdministrador() {
+        return ResponseEntity.ok(usuarioService.existeAdministrador());
+    }
+
+
     @DeleteMapping("/user/delete/{id}")
     public ResponseEntity<Void> deleteById(@PathVariable Long id) {
         usuarioService.deleteById(id);
