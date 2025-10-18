@@ -45,6 +45,10 @@
         @Column(nullable = true)
         private Double troco; // Troco calculado automaticamente
 
+        @Column(nullable = false)
+        private Boolean itensDevolvidos = false; // Controla se os itens foram devolvidos ao estoque no cancelamento
+
+
         @ManyToOne
         @JsonIgnoreProperties({"cpf", "idade", "login", "senha", "cargo", "vendas"})
         @JoinColumn(name = "usuario_id", nullable = false)

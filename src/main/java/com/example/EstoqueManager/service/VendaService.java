@@ -103,6 +103,37 @@ public class VendaService {
         VendaModel vendaExistente = vendaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Venda não encontrada com ID: " + id));
 
+        // Verifica se está tentando cancelar uma venda já cancelada
+        if (!vendaExistente.isAtivo() && !vendaAtualizada.isAtivo()) {
+            throw new BusinessException("Esta venda já está cancelada.");
+        }
+
+        // LÓGICA DE CANCELAMENTO
+        if (vendaExistente.isAtivo() && !vendaAtualizada.isAtivo()) {
+            // Está cancelando a venda
+
+            // Valida se informou sobre devolução de itens
+            if (vendaAtualizada.getItensDevolvidos() == null) {
+                throw new BusinessException(
+                        "Ao cancelar uma venda, é obrigatório informar se os itens foram devolvidos (itensDevolvidos: true/false)."
+                );
+            }
+
+            // Se for para devolver itens ao estoque
+            if (vendaAtualizada.getItensDevolvidos()) {
+                devolverEstoqueItensAntigos(vendaExistente);
+                vendaExistente.setItensDevolvidos(true);
+            } else {
+                vendaExistente.setItensDevolvidos(false);
+            }
+
+            // Marca a venda como cancelada
+            vendaExistente.setAtivo(false);
+
+            return vendaRepository.save(vendaExistente);
+        }
+
+        // LÓGICA DE ATUALIZAÇÃO NORMAL (se a venda ainda está ativa)
         if (vendaAtualizada.getData() != null) {
             vendaExistente.setData(vendaAtualizada.getData());
         }
@@ -150,9 +181,6 @@ public class VendaService {
             vendaExistente.setValorPago(vendaAtualizada.getValorPago());
             processarPagamento(vendaExistente);
         }
-
-
-        vendaExistente.setAtivo(vendaAtualizada.isAtivo());
 
         return vendaRepository.save(vendaExistente);
     }
