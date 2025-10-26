@@ -9,7 +9,7 @@ Projeto se trata de um sistem de gerenciamento de estoque, feito em JAVA + Sprin
 
 *Gerenciamento de itens e categorias
 
-*Gerenciamento de comprador (incompleto)
+*Gerenciamento de comprador 
 
 *Gerenciamento de vendas e relatórios completos 
 
@@ -24,6 +24,6 @@ This project is an inventory management system developed in Java with Spring Boo
 
 *Item and category management
 
-*Buyer management (incomplete)
+*Buyer management 
 
 *Sales management and comprehensive reporting
