@@ -104,14 +104,19 @@ class ProdutoServiceTest {
 
     @Test
     void save_MissingUsuario_ThrowsBusinessException() {
+        // Configurar produto com todos os campos válidos EXCETO o usuário
+        produto.setQuantidade(10); // ✅ Adicionar quantidade válida
+        produto.setCategoria(categoria); // ✅ Adicionar categoria válida
+
         // Executar o método com usuário nulo e capturar exceção
         Exception exception = assertThrows(BusinessException.class, () -> {
             produtoService.save(produto, null); // Usuário não informado
         });
 
-        // Verificar a mensagem da exceção lançada (atualizada para corresponder à mensagem real)
-        assertEquals("Quantidade deve ser maior ou igual a zero.", exception.getMessage());
+        // Verificar a mensagem da exceção lançada
+        assertEquals("Usuário responsável é obrigatório.", exception.getMessage());
     }
+
 
     @Test
     void findById_ValidId_ReturnsProduto() {
@@ -159,11 +164,16 @@ class ProdutoServiceTest {
         // Configurar lista de vendas simuladas
         List<ItemVendaModel> vendas = new ArrayList<>();
 
-        // Produto 1 (Alta contribuição para faturamento)
+        // Produto1 (Contribuição média para faturamento)
+        ProdutoModel produto1 = new ProdutoModel();
+        produto1.setId(1L);
+        produto1.setNome("Produto 1");
+        produto1.setPreco(100.0);
+
         ItemVendaModel venda1 = new ItemVendaModel();
-        venda1.setProduto(produto); // Produto já configurado no @BeforeEach
+        venda1.setProduto(produto1);
         venda1.setQuantidadeVendida(10);
-        venda1.setPrecoVendido(50.0); // Faturamento: 10 * 50 = 500.0
+        venda1.setPrecoVendido(50.0); // Faturamento: 5 * 30 = 150.0
         vendas.add(venda1);
 
         // Produto 2 (Contribuição média para faturamento)

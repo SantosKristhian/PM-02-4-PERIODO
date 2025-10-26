@@ -41,8 +41,17 @@ class CompradorControllerTest {
 
     @Test
     void findAll_ReturnsListOfCompradores() throws Exception {
-        CompradorModel comp1 = new CompradorModel(1L, "João", "12345678901", "joao@mail.com");
-        CompradorModel comp2 = new CompradorModel(2L, "Maria", "10987654321", "maria@mail.com");
+        CompradorModel comp1 = new CompradorModel();
+        comp1.setId(1L);
+        comp1.setNome("João");
+        comp1.setCpf("12345678901");
+        comp1.setEmail("joao@mail.com");
+
+        CompradorModel comp2 = new CompradorModel();
+        comp2.setId(2L);
+        comp2.setNome("Maria");
+        comp2.setCpf("10987654321");
+        comp2.setEmail("maria@mail.com");
 
         when(compradorService.findAll()).thenReturn(List.of(comp1, comp2));
 
@@ -55,7 +64,12 @@ class CompradorControllerTest {
 
     @Test
     void findById_ValidId_ReturnsComprador() throws Exception {
-        CompradorModel comprador = new CompradorModel(1L, "João", "12345678901", "joao@mail.com");
+        CompradorModel comprador = new CompradorModel();
+        comprador.setId(1L);
+        comprador.setNome("João");
+        comprador.setCpf("12345678901");
+        comprador.setEmail("joao@mail.com");
+
         when(compradorService.findById(1L)).thenReturn(comprador);
 
         mockMvc.perform(get("/api/emanager/comprador/findById/1"))
@@ -74,10 +88,18 @@ class CompradorControllerTest {
 
     @Test
     void save_ValidComprador_ReturnsCreated() throws Exception {
-        CompradorModel input = new CompradorModel(null, "João", "12345678901", "joao@mail.com");
-        CompradorModel saved = new CompradorModel(1L, "João", "12345678901", "joao@mail.com");
+        CompradorModel input = new CompradorModel();
+        input.setNome("João");
+        input.setCpf("12345678901");
+        input.setEmail("joao@mail.com");
 
-        when(compradorService.save(input)).thenReturn(saved);
+        CompradorModel saved = new CompradorModel();
+        saved.setId(1L);
+        saved.setNome("João");
+        saved.setCpf("12345678901");
+        saved.setEmail("joao@mail.com");
+
+        when(compradorService.save(any(CompradorModel.class))).thenReturn(saved);
 
         mockMvc.perform(post("/api/emanager/comprador/save")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -99,10 +121,18 @@ class CompradorControllerTest {
 
     @Test
     void update_ValidId_ReturnsUpdatedComprador() throws Exception {
-        CompradorModel updates = new CompradorModel(null, "João Atualizado", "12345678901", "joao@mail.com");
-        CompradorModel updated = new CompradorModel(1L, "João Atualizado", "12345678901", "joao@mail.com");
+        CompradorModel updates = new CompradorModel();
+        updates.setNome("João Atualizado");
+        updates.setCpf("12345678901");
+        updates.setEmail("joao@mail.com");
 
-        when(compradorService.updateById(1L, updates)).thenReturn(updated);
+        CompradorModel updated = new CompradorModel();
+        updated.setId(1L);
+        updated.setNome("João Atualizado");
+        updated.setCpf("12345678901");
+        updated.setEmail("joao@mail.com");
+
+        when(compradorService.updateById(eq(1L), any(CompradorModel.class))).thenReturn(updated);
 
         mockMvc.perform(put("/api/emanager/comprador/update/1")
                         .contentType(MediaType.APPLICATION_JSON)

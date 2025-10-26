@@ -2,6 +2,7 @@ package com.example.EstoqueManager.controller;
 
 import com.example.EstoqueManager.dto.ProdutoCurvaABCDTO;
 import com.example.EstoqueManager.exception.ResourceNotFoundException;
+import com.example.EstoqueManager.model.Cargo;
 import com.example.EstoqueManager.model.ProdutoModel;
 import com.example.EstoqueManager.model.UsuarioModel;
 import com.example.EstoqueManager.service.ProdutoService;
@@ -46,8 +47,19 @@ class ProdutoControllerTest {
 
     @Test
     void findAll_ReturnsListOfProdutos() throws Exception {
-        ProdutoModel p1 = new ProdutoModel(1L, "Produto A", 10, 100.0);
-        ProdutoModel p2 = new ProdutoModel(2L, "Produto B", 5, 50.0);
+        ProdutoModel p1 = new ProdutoModel();
+        p1.setId(1L);
+        p1.setNome("Produto A");
+        p1.setQuantidade(10);
+        p1.setPreco(100.0);
+        p1.setAtivo(true);
+
+        ProdutoModel p2 = new ProdutoModel();
+        p2.setId(2L);
+        p2.setNome("Produto B");
+        p2.setQuantidade(5);
+        p2.setPreco(50.0);
+        p2.setAtivo(true);
 
         when(produtoService.findAll()).thenReturn(List.of(p1, p2));
 
@@ -60,7 +72,13 @@ class ProdutoControllerTest {
 
     @Test
     void findById_ValidId_ReturnsProduto() throws Exception {
-        ProdutoModel produto = new ProdutoModel(1L, "Produto A", 10, 100.0);
+        ProdutoModel produto = new ProdutoModel();
+        produto.setId(1L);
+        produto.setNome("Produto A");
+        produto.setQuantidade(10);
+        produto.setPreco(100.0);
+        produto.setAtivo(true);
+
         when(produtoService.findById(1L)).thenReturn(produto);
 
         mockMvc.perform(get("/api/emanager/produto/findById/1"))
@@ -71,12 +89,30 @@ class ProdutoControllerTest {
 
     @Test
     void save_ValidProduto_ReturnsCreated() throws Exception {
-        UsuarioModel usuario = new UsuarioModel(1L, "Usuário Teste", "teste@mail.com");
-        ProdutoModel input = new ProdutoModel(null, "Produto A", 10, 100.0);
-        ProdutoModel saved = new ProdutoModel(1L, "Produto A", 10, 100.0);
+        UsuarioModel usuario = new UsuarioModel();
+        usuario.setId(1L);
+        usuario.setNome("Usuário Teste");
+        usuario.setCpf("12345678901");
+        usuario.setIdade(30);
+        usuario.setLogin("usuario1");
+        usuario.setSenha("senha123");
+        usuario.setCargo(Cargo.VENDEDOR);
+
+        ProdutoModel input = new ProdutoModel();
+        input.setNome("Produto A");
+        input.setQuantidade(10);
+        input.setPreco(100.0);
+        input.setAtivo(true);
+
+        ProdutoModel saved = new ProdutoModel();
+        saved.setId(1L);
+        saved.setNome("Produto A");
+        saved.setQuantidade(10);
+        saved.setPreco(100.0);
+        saved.setAtivo(true);
 
         when(usuarioService.findById(1L)).thenReturn(usuario);
-        when(produtoService.save(input, usuario)).thenReturn(saved);
+        when(produtoService.save(any(ProdutoModel.class), any(UsuarioModel.class))).thenReturn(saved);
 
         mockMvc.perform(post("/api/emanager/produto/save/1")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -88,12 +124,30 @@ class ProdutoControllerTest {
 
     @Test
     void update_ValidProduto_ReturnsUpdatedProduto() throws Exception {
-        UsuarioModel usuario = new UsuarioModel(1L, "Usuário Teste", "teste@mail.com");
-        ProdutoModel updates = new ProdutoModel(null, "Produto Atualizado", 15, 150.0);
-        ProdutoModel updated = new ProdutoModel(1L, "Produto Atualizado", 15, 150.0);
+        UsuarioModel usuario = new UsuarioModel();
+        usuario.setId(1L);
+        usuario.setNome("Usuário Teste");
+        usuario.setCpf("12345678901");
+        usuario.setIdade(30);
+        usuario.setLogin("usuario1");
+        usuario.setSenha("senha123");
+        usuario.setCargo(Cargo.VENDEDOR);
+
+        ProdutoModel updates = new ProdutoModel();
+        updates.setNome("Produto Atualizado");
+        updates.setQuantidade(15);
+        updates.setPreco(150.0);
+        updates.setAtivo(true);
+
+        ProdutoModel updated = new ProdutoModel();
+        updated.setId(1L);
+        updated.setNome("Produto Atualizado");
+        updated.setQuantidade(15);
+        updated.setPreco(150.0);
+        updated.setAtivo(true);
 
         when(usuarioService.findById(1L)).thenReturn(usuario);
-        when(produtoService.updateByID(1L, updates, usuario)).thenReturn(updated);
+        when(produtoService.updateByID(eq(1L), any(ProdutoModel.class), any(UsuarioModel.class))).thenReturn(updated);
 
         mockMvc.perform(put("/api/emanager/produto/update/1/1")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -105,8 +159,15 @@ class ProdutoControllerTest {
 
     @Test
     void getCurvaABC_ReturnsListOfCurvaDTO() throws Exception {
-        ProdutoCurvaABCDTO dto1 = new ProdutoCurvaABCDTO("Produto A", 100.0, "A");
-        ProdutoCurvaABCDTO dto2 = new ProdutoCurvaABCDTO("Produto B", 50.0, "B");
+        ProdutoCurvaABCDTO dto1 = new ProdutoCurvaABCDTO();
+        dto1.setNome("Produto A");
+        dto1.setValorTotalVendido(100.0);
+        dto1.setClassificacao("A");
+
+        ProdutoCurvaABCDTO dto2 = new ProdutoCurvaABCDTO();
+        dto2.setNome("Produto B");
+        dto2.setValorTotalVendido(50.0);
+        dto2.setClassificacao("B");
 
         when(produtoService.getCurvaABC()).thenReturn(List.of(dto1, dto2));
 

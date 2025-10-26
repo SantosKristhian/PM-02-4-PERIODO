@@ -1,3 +1,4 @@
+
 package com.example.EstoqueManager.service;
 
 import com.example.EstoqueManager.exception.BusinessException;
@@ -14,6 +15,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -40,6 +42,8 @@ class VendaServiceTest {
 
     private VendaModel venda;
     private ProdutoModel produto;
+    private UsuarioModel usuario;
+    private ItemVendaModel itemVenda;
 
     @BeforeEach
     void setUp() {
@@ -51,18 +55,28 @@ class VendaServiceTest {
         produto.setPreco(50.0);
         produto.setQuantidade(100);
 
-        ItemVendaModel itemVenda = new ItemVendaModel();
+        usuario = new UsuarioModel();
+        usuario.setId(1L);
+        usuario.setNome("Usuário Teste");
+        usuario.setCpf("12345678901");
+        usuario.setIdade(30);
+        usuario.setLogin("usuario1");
+        usuario.setSenha("senha123");
+        usuario.setCargo(Cargo.VENDEDOR);
+
+        itemVenda = new ItemVendaModel();
         itemVenda.setProduto(produto);
         itemVenda.setQuantidadeVendida(2);
-        itemVenda.setPrecoVendido(produto.getPreco() * 2);
+        itemVenda.setPrecoVendido(50.0);
 
         venda = new VendaModel();
         venda.setId(1L);
         venda.setData(LocalDateTime.now());
         venda.setAtivo(true);
-        venda.setMetodoPagamento(MetodoPagamento.CARTAO_CREDITO); // Usando a opção válida do enum
-        venda.setValortotal(100.0); // Substituído para usar "valortotal"
-        venda.setItens(Arrays.asList(itemVenda)); // Substituído para usar "itens"
+        venda.setMetodoPagamento(MetodoPagamento.CARTAO_CREDITO);
+        venda.setValortotal(100.0);
+        venda.setUsuario(usuario);
+        venda.setItens(new ArrayList<>(Arrays.asList(itemVenda)));
     }
 
     @Test
@@ -77,7 +91,20 @@ class VendaServiceTest {
     }
 
     @Test
-    void buscarVendaPorId_ExistingId_ReturnsVenda() {
+    void listarVendas_ReturnsEmptyList() {
+        when(vendaRepository.findAll()).thenReturn(new ArrayList<>());
+
+        List<VendaModel> vendas = vendaService.listarVendas();
+
+        assertNotNull(vendas);
+        assertTrue(vendas.isEmpty());
+        verify(vendaRepository, times(1)).findAll();
+    }
+
+
+
+    @Test
+    void buscarVendaPorId_ValidId_ReturnsVenda() {
         when(vendaRepository.findById(1L)).thenReturn(Optional.of(venda));
 
         VendaModel result = vendaService.buscarVendaPorId(1L);
@@ -88,52 +115,416 @@ class VendaServiceTest {
     }
 
     @Test
-    void registrarVenda_ValidVenda_ReturnsVenda() {
-        // Mock do Produto
-        when(produtoRepository.findById(1L)).thenReturn(Optional.of(produto));
-
-        // Mock do Usuário
-        UsuarioModel usuario = new UsuarioModel();
-        usuario.setId(1L);
-        usuario.setNome("Usuário Teste");
-        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario)); // Adicionado mock do usuário
-
-        // Mock do Salvar Venda
-        when(vendaRepository.save(any(VendaModel.class))).thenReturn(venda);
-
-        // Definindo o usuário responsável pela venda
-        venda.setUsuario(usuario);
-
-        // Chamando o método de registro de venda
-        VendaModel result = vendaService.registrarVenda(venda);
-
-        // Assertivas
-        assertNotNull(result);
-        assertEquals(100.0, result.getValortotal()); // Substituído para "valortotal"
-        assertEquals(usuario, venda.getUsuario()); // Verificando o usuário atribuído
-        verify(vendaRepository, times(1)).save(venda); // Garantindo que o método save foi chamado
+    void buscarVendaPorId_InvalidId_ThrowsBusinessException() {
+        assertThrows(BusinessException.class, () -> vendaService.buscarVendaPorId(null));
+        assertThrows(BusinessException.class, () -> vendaService.buscarVendaPorId(0L));
+        assertThrows(BusinessException.class, () -> vendaService.buscarVendaPorId(-1L));
     }
 
     @Test
-    void updateVenda_ExistingId_ReturnsUpdatedVenda() {
-        // Cria um novo objeto da venda atualizada
+    void buscarVendaPorId_NotFound_ThrowsResourceNotFoundException() {
+        when(vendaRepository.findById(999L)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(ResourceNotFoundException.class,
+                () -> vendaService.buscarVendaPorId(999L));
+
+        assertEquals("Venda não encontrada com ID: 999", exception.getMessage());
+    }
+
+
+
+    @Test
+    void registrarVenda_ValidVenda_ReturnsVenda() {
+        when(produtoRepository.findById(1L)).thenReturn(Optional.of(produto));
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+        when(produtoRepository.save(any(ProdutoModel.class))).thenReturn(produto);
+        when(vendaRepository.save(any(VendaModel.class))).thenReturn(venda);
+
+        VendaModel result = vendaService.registrarVenda(venda);
+
+        assertNotNull(result);
+        assertEquals(100.0, result.getValortotal());
+        assertTrue(result.isAtivo());
+        verify(vendaRepository, times(1)).save(any(VendaModel.class));
+        verify(produtoRepository, times(1)).save(produto);
+    }
+
+    @Test
+    void registrarVenda_NullVenda_ThrowsBusinessException() {
+        Exception exception = assertThrows(BusinessException.class,
+                () -> vendaService.registrarVenda(null));
+
+        assertEquals("Venda não pode ser nula.", exception.getMessage());
+    }
+
+    @Test
+    void registrarVenda_SemItens_ThrowsBusinessException() {
+        venda.setItens(new ArrayList<>());
+
+        Exception exception = assertThrows(BusinessException.class,
+                () -> vendaService.registrarVenda(venda));
+
+        assertEquals("A venda deve conter ao menos um item.", exception.getMessage());
+    }
+
+    @Test
+    void registrarVenda_SemMetodoPagamento_ThrowsBusinessException() {
+        venda.setMetodoPagamento(null);
+
+        Exception exception = assertThrows(BusinessException.class,
+                () -> vendaService.registrarVenda(venda));
+
+        assertEquals("Método de pagamento é obrigatório.", exception.getMessage());
+    }
+
+    @Test
+    void registrarVenda_SemUsuario_ThrowsBusinessException() {
+        venda.setUsuario(null);
+
+        Exception exception = assertThrows(BusinessException.class,
+                () -> vendaService.registrarVenda(venda));
+
+        assertEquals("Usuário responsável pela venda é obrigatório.", exception.getMessage());
+    }
+
+    @Test
+    void registrarVenda_UsuarioNaoEncontrado_ThrowsResourceNotFoundException() {
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(ResourceNotFoundException.class,
+                () -> vendaService.registrarVenda(venda));
+
+        assertEquals("Usuário não encontrado com ID: 1", exception.getMessage());
+    }
+
+    @Test
+    void registrarVenda_ProdutoNaoEncontrado_ThrowsResourceNotFoundException() {
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+        when(produtoRepository.findById(1L)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(ResourceNotFoundException.class,
+                () -> vendaService.registrarVenda(venda));
+
+        assertEquals("Produto não encontrado com ID: 1", exception.getMessage());
+    }
+
+    @Test
+    void registrarVenda_EstoqueInsuficiente_ThrowsBusinessException() {
+        produto.setQuantidade(1); // Menos que os 2 solicitados
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+        when(produtoRepository.findById(1L)).thenReturn(Optional.of(produto));
+
+        Exception exception = assertThrows(BusinessException.class,
+                () -> vendaService.registrarVenda(venda));
+
+        assertTrue(exception.getMessage().contains("Estoque insuficiente"));
+    }
+
+    @Test
+    void registrarVenda_ItemSemProduto_ThrowsBusinessException() {
+        itemVenda.setProduto(null);
+
+        Exception exception = assertThrows(BusinessException.class,
+                () -> vendaService.registrarVenda(venda));
+
+        assertEquals("Produto inválido no item da venda.", exception.getMessage());
+    }
+
+    @Test
+    void registrarVenda_QuantidadeInvalida_ThrowsBusinessException() {
+        itemVenda.setQuantidadeVendida(0);
+
+        Exception exception = assertThrows(BusinessException.class,
+                () -> vendaService.registrarVenda(venda));
+
+        assertEquals("Quantidade vendida deve ser maior que zero.", exception.getMessage());
+    }
+
+
+
+    @Test
+    void registrarVenda_PagamentoDinheiro_ComTroco_Success() {
+        venda.setMetodoPagamento(MetodoPagamento.DINHEIRO);
+        venda.setValorPago(150.0);
+
+        when(produtoRepository.findById(1L)).thenReturn(Optional.of(produto));
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+        when(produtoRepository.save(any(ProdutoModel.class))).thenReturn(produto);
+        when(vendaRepository.save(any(VendaModel.class))).thenReturn(venda);
+
+        VendaModel result = vendaService.registrarVenda(venda);
+
+        assertNotNull(result);
+        assertEquals(150.0, result.getValorPago());
+        assertEquals(50.0, result.getTroco());
+    }
+
+    @Test
+    void registrarVenda_PagamentoDinheiro_SemValorPago_ThrowsBusinessException() {
+        venda.setMetodoPagamento(MetodoPagamento.DINHEIRO);
+        venda.setValorPago(null);
+
+        when(produtoRepository.findById(1L)).thenReturn(Optional.of(produto));
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+        when(produtoRepository.save(any(ProdutoModel.class))).thenReturn(produto);
+
+        Exception exception = assertThrows(BusinessException.class,
+                () -> vendaService.registrarVenda(venda));
+
+        assertEquals("Valor pago é obrigatório para pagamento em dinheiro.", exception.getMessage());
+    }
+
+    @Test
+    void registrarVenda_PagamentoDinheiro_ValorInsuficiente_ThrowsBusinessException() {
+        venda.setMetodoPagamento(MetodoPagamento.DINHEIRO);
+        venda.setValorPago(50.0); // Menos que os 100.0 do total
+
+        when(produtoRepository.findById(1L)).thenReturn(Optional.of(produto));
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+        when(produtoRepository.save(any(ProdutoModel.class))).thenReturn(produto);
+
+        Exception exception = assertThrows(BusinessException.class,
+                () -> vendaService.registrarVenda(venda));
+
+        assertTrue(exception.getMessage().contains("insuficiente"));
+    }
+
+    @Test
+    void registrarVenda_PagamentoCartao_SemTroco_Success() {
+        venda.setMetodoPagamento(MetodoPagamento.CARTAO_CREDITO);
+
+        when(produtoRepository.findById(1L)).thenReturn(Optional.of(produto));
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+        when(produtoRepository.save(any(ProdutoModel.class))).thenReturn(produto);
+        when(vendaRepository.save(any(VendaModel.class))).thenReturn(venda);
+
+        VendaModel result = vendaService.registrarVenda(venda);
+
+        assertNotNull(result);
+        assertEquals(100.0, result.getValorPago());
+        assertEquals(0.0, result.getTroco());
+    }
+
+
+
+    @Test
+    void registrarVenda_ComCompradorExistente_Success() {
+        CompradorModel comprador = new CompradorModel();
+        comprador.setId(1L);
+        comprador.setNome("Comprador Teste");
+        comprador.setCpf("98765432100");
+        comprador.setEmail("comprador@mail.com");
+        venda.setComprador(comprador);
+
+        when(produtoRepository.findById(1L)).thenReturn(Optional.of(produto));
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+        when(compradorRepository.findById(1L)).thenReturn(Optional.of(comprador));
+        when(produtoRepository.save(any(ProdutoModel.class))).thenReturn(produto);
+        when(vendaRepository.save(any(VendaModel.class))).thenReturn(venda);
+
+        VendaModel result = vendaService.registrarVenda(venda);
+
+        assertNotNull(result);
+        assertEquals(comprador, result.getComprador());
+        verify(compradorRepository, times(1)).findById(1L);
+    }
+
+    @Test
+    void registrarVenda_CompradorNaoEncontrado_ThrowsResourceNotFoundException() {
+        CompradorModel comprador = new CompradorModel();
+        comprador.setId(999L);
+        venda.setComprador(comprador);
+
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+        when(compradorRepository.findById(999L)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(ResourceNotFoundException.class,
+                () -> vendaService.registrarVenda(venda));
+
+        assertEquals("Comprador não encontrado com ID: 999", exception.getMessage());
+    }
+
+    @Test
+    void registrarVenda_NovoComprador_Success() {
+        CompradorModel novoComprador = new CompradorModel();
+        novoComprador.setNome("Novo Comprador");
+        novoComprador.setCpf("11111111111");
+        novoComprador.setEmail("novo@mail.com");
+        venda.setComprador(novoComprador);
+
+        CompradorModel compradorSalvo = new CompradorModel();
+        compradorSalvo.setId(2L);
+        compradorSalvo.setNome("Novo Comprador");
+        compradorSalvo.setCpf("11111111111");
+        compradorSalvo.setEmail("novo@mail.com");
+
+        when(produtoRepository.findById(1L)).thenReturn(Optional.of(produto));
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+        when(compradorRepository.save(any(CompradorModel.class))).thenReturn(compradorSalvo);
+        when(produtoRepository.save(any(ProdutoModel.class))).thenReturn(produto);
+        when(vendaRepository.save(any(VendaModel.class))).thenReturn(venda);
+
+        VendaModel result = vendaService.registrarVenda(venda);
+
+        assertNotNull(result);
+        verify(compradorRepository, times(1)).save(any(CompradorModel.class));
+    }
+
+    @Test
+    void registrarVenda_NovoComprador_SemNome_ThrowsBusinessException() {
+        CompradorModel novoComprador = new CompradorModel();
+        novoComprador.setCpf("11111111111");
+        novoComprador.setEmail("novo@mail.com");
+        venda.setComprador(novoComprador);
+
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+
+        Exception exception = assertThrows(BusinessException.class,
+                () -> vendaService.registrarVenda(venda));
+
+        assertEquals("Nome do comprador é obrigatório para cadastro.", exception.getMessage());
+    }
+
+    @Test
+    void registrarVenda_NovoComprador_SemCpf_ThrowsBusinessException() {
+        CompradorModel novoComprador = new CompradorModel();
+        novoComprador.setNome("Novo Comprador");
+        novoComprador.setEmail("novo@mail.com");
+        venda.setComprador(novoComprador);
+
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+
+        Exception exception = assertThrows(BusinessException.class,
+                () -> vendaService.registrarVenda(venda));
+
+        assertEquals("CPF do comprador é obrigatório para cadastro.", exception.getMessage());
+    }
+
+    @Test
+    void registrarVenda_NovoComprador_SemEmail_ThrowsBusinessException() {
+        CompradorModel novoComprador = new CompradorModel();
+        novoComprador.setNome("Novo Comprador");
+        novoComprador.setCpf("11111111111");
+        venda.setComprador(novoComprador);
+
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+
+        Exception exception = assertThrows(BusinessException.class,
+                () -> vendaService.registrarVenda(venda));
+
+        assertEquals("Email do comprador é obrigatório para cadastro.", exception.getMessage());
+    }
+
+
+
+    @Test
+    void updateVenda_ValidId_ReturnsUpdatedVenda() {
+        ProdutoModel novoProduto = new ProdutoModel();
+        novoProduto.setId(2L);
+        novoProduto.setNome("Novo Produto");
+        novoProduto.setPreco(75.0);
+        novoProduto.setQuantidade(50);
+
+        ItemVendaModel novoItem = new ItemVendaModel();
+        novoItem.setProduto(novoProduto);
+        novoItem.setQuantidadeVendida(3);
+
         VendaModel vendaAtualizada = new VendaModel();
-        vendaAtualizada.setItens(Arrays.asList(
-                new ItemVendaModel(null, venda, produto, 5, produto.getPreco() * 5)
-        ));
-        vendaAtualizada.setValortotal(250.0);
+        vendaAtualizada.setItens(new ArrayList<>(Arrays.asList(novoItem)));
 
-        // Mock para o repositório simular o comportamento esperado
         when(vendaRepository.findById(1L)).thenReturn(Optional.of(venda));
-        when(vendaRepository.save(any(VendaModel.class))).thenReturn(vendaAtualizada);
+        when(produtoRepository.findById(1L)).thenReturn(Optional.of(produto));
+        when(produtoRepository.findById(2L)).thenReturn(Optional.of(novoProduto));
+        when(produtoRepository.save(any(ProdutoModel.class))).thenReturn(produto);
+        when(vendaRepository.save(any(VendaModel.class))).thenReturn(venda);
 
-        // Executa o método de serviço
         VendaModel result = vendaService.updateVenda(1L, vendaAtualizada);
 
-        // Verificações
         assertNotNull(result);
-        assertEquals(250.0, result.getValortotal()); // Verifica o valor total
-        verify(vendaRepository, times(1)).findById(1L);
-        verify(vendaRepository, times(1)).save(any(VendaModel.class)); // Ignora a verificação exata do objeto
+        verify(vendaRepository, times(1)).save(any(VendaModel.class));
+    }
+
+    @Test
+    void updateVenda_InvalidId_ThrowsBusinessException() {
+        VendaModel vendaAtualizada = new VendaModel();
+
+        assertThrows(BusinessException.class, () -> vendaService.updateVenda(null, vendaAtualizada));
+        assertThrows(BusinessException.class, () -> vendaService.updateVenda(0L, vendaAtualizada));
+    }
+
+    @Test
+    void updateVenda_NotFound_ThrowsResourceNotFoundException() {
+        VendaModel vendaAtualizada = new VendaModel();
+        when(vendaRepository.findById(999L)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(ResourceNotFoundException.class,
+                () -> vendaService.updateVenda(999L, vendaAtualizada));
+
+        assertEquals("Venda não encontrada com ID: 999", exception.getMessage());
+    }
+
+
+
+    @Test
+    void updateVenda_CancelarVenda_ComDevolucao_Success() {
+        VendaModel vendaCancelamento = new VendaModel();
+        vendaCancelamento.setAtivo(false);
+        vendaCancelamento.setItensDevolvidos(true);
+
+        when(vendaRepository.findById(1L)).thenReturn(Optional.of(venda));
+        when(produtoRepository.save(any(ProdutoModel.class))).thenReturn(produto);
+        when(vendaRepository.save(any(VendaModel.class))).thenReturn(venda);
+
+        VendaModel result = vendaService.updateVenda(1L, vendaCancelamento);
+
+        assertNotNull(result);
+        assertFalse(result.isAtivo());
+        assertTrue(result.getItensDevolvidos());
+        verify(produtoRepository, times(1)).save(produto);
+    }
+
+    @Test
+    void updateVenda_CancelarVenda_SemDevolucao_Success() {
+        VendaModel vendaCancelamento = new VendaModel();
+        vendaCancelamento.setAtivo(false);
+        vendaCancelamento.setItensDevolvidos(false);
+
+        when(vendaRepository.findById(1L)).thenReturn(Optional.of(venda));
+        when(vendaRepository.save(any(VendaModel.class))).thenReturn(venda);
+
+        VendaModel result = vendaService.updateVenda(1L, vendaCancelamento);
+
+        assertNotNull(result);
+        assertFalse(result.isAtivo());
+        assertFalse(result.getItensDevolvidos());
+        verify(produtoRepository, never()).save(any(ProdutoModel.class));
+    }
+
+    @Test
+    void updateVenda_CancelarVenda_SemInformarDevolucao_ThrowsBusinessException() {
+        VendaModel vendaCancelamento = new VendaModel();
+        vendaCancelamento.setAtivo(false);
+        vendaCancelamento.setItensDevolvidos(null);
+
+        when(vendaRepository.findById(1L)).thenReturn(Optional.of(venda));
+
+        Exception exception = assertThrows(BusinessException.class,
+                () -> vendaService.updateVenda(1L, vendaCancelamento));
+
+        assertTrue(exception.getMessage().contains("obrigatório informar se os itens foram devolvidos"));
+    }
+
+    @Test
+    void updateVenda_CancelarVendaJaCancelada_ThrowsBusinessException() {
+        venda.setAtivo(false);
+        VendaModel vendaCancelamento = new VendaModel();
+        vendaCancelamento.setAtivo(false);
+
+        when(vendaRepository.findById(1L)).thenReturn(Optional.of(venda));
+
+        Exception exception = assertThrows(BusinessException.class,
+                () -> vendaService.updateVenda(1L, vendaCancelamento));
+
+        assertEquals("Esta venda já está cancelada.", exception.getMessage());
     }
 }

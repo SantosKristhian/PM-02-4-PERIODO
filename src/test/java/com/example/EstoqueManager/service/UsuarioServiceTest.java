@@ -146,26 +146,22 @@ class UsuarioServiceTest {
             usuarioService.save(usuario);
         });
 
-        assertEquals("Já existe um usuário com o login informado.", exception.getMessage());
+        assertEquals("Login já cadastrado no sistema.", exception.getMessage());
         verify(usuarioRepository, times(1)).findByLogin("joao123");
     }
 
     @Test
     void deleteById_ValidId_RemovesUsuario() {
-        // Configuração do mock para garantir que findById retorna um usuário válido
-        UsuarioModel usuario = new UsuarioModel();
-        usuario.setId(1L);
-
-        // Mockando o comportamento do repositório
-        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario)); // Retorna o usuário válido
-        doNothing().when(usuarioRepository).deleteById(1L); // Simula o comportamento do deleteById
+        // Mockando o comportamento correto do repositório
+        when(usuarioRepository.existsById(1L)).thenReturn(true);
+        doNothing().when(usuarioRepository).deleteById(1L);
 
         // Execução do método a ser testado
-        assertDoesNotThrow(() -> usuarioService.deleteById(1L)); // Não deve lançar exceção
+        assertDoesNotThrow(() -> usuarioService.deleteById(1L));
 
         // Verificações
-        verify(usuarioRepository, times(1)).findById(1L); // Confirma se findById foi chamado
-        verify(usuarioRepository, times(1)).deleteById(1L); // Confirma se deleteById foi chamado
+        verify(usuarioRepository, times(1)).existsById(1L);
+        verify(usuarioRepository, times(1)).deleteById(1L);
     }
 
     @Test
@@ -232,12 +228,48 @@ class UsuarioServiceTest {
         verify(usuarioRepository, times(1)).count();
     }
 
+
     @Test
     void existeAdministrador_ReturnsTrue() {
-        when(usuarioRepository.findByLogin("admin")).thenReturn(usuario);
+        // Mock para findAll() retornar uma lista com o usuário que tem cargo ADM
+        when(usuarioRepository.findAll()).thenReturn(List.of(usuario));
 
         boolean result = usuarioService.existeAdministrador();
+
         assertTrue(result);
-        verify(usuarioRepository, times(1)).findByLogin("admin");
+        verify(usuarioRepository, times(1)).findAll();
     }
+
+    @Test
+    void existeAdministrador_ReturnsFalse() {
+        // Criar um usuário sem cargo ADM
+        UsuarioModel usuarioVendedor = new UsuarioModel();
+        usuarioVendedor.setId(2L);
+        usuarioVendedor.setNome("Maria Santos");
+        usuarioVendedor.setCpf("98765432100");
+        usuarioVendedor.setIdade(25);
+        usuarioVendedor.setLogin("maria123");
+        usuarioVendedor.setSenha("senha456");
+        usuarioVendedor.setCargo(Cargo.VENDEDOR);
+
+        // Mock para findAll() retornar uma lista com apenas o vendedor
+        when(usuarioRepository.findAll()).thenReturn(List.of(usuarioVendedor));
+
+        boolean result = usuarioService.existeAdministrador();
+
+        assertFalse(result);
+        verify(usuarioRepository, times(1)).findAll();
+    }
+
+    @Test
+    void existeAdministrador_EmptyList_ReturnsFalse() {
+        // Mock para findAll() retornar lista vazia
+        when(usuarioRepository.findAll()).thenReturn(List.of());
+
+        boolean result = usuarioService.existeAdministrador();
+
+        assertFalse(result);
+        verify(usuarioRepository, times(1)).findAll();
+    }
+
 }
