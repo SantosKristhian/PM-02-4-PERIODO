@@ -4,11 +4,14 @@
 
 Projeto se trata de um sistem de gerenciamento de estoque, feito em JAVA + Springboot, com o objetivo de suprir a demanda de uma aplicação que contivesse a regra de negócio CurvaABC. Para isso foi implementado também, um sistema de vendas completo.
 
-<p>
-  *Gerenciamento e autenticação de usuários (com Roles)
+
+*Gerenciamento e autenticação de usuários (com Roles)
+
 *Gerenciamento de itens e categorias
+
 *Gerenciamento de comprador (incompleto)
-*Gerenciamento de vendas e relatórios completos </p>
+
+*Gerenciamento de vendas e relatórios completos 
 
 ---------------------------------------------------------------------------
 
@@ -18,6 +21,9 @@ Projeto se trata de um sistem de gerenciamento de estoque, feito em JAVA + Sprin
 This project is an inventory management system developed in Java with Spring Boot, designed to meet the need for an application that implements the ABC classification method (Curva ABC). In addition, it includes a complete sales management module.
 
 *User management and authentication (with roles)
+
 *Item and category management
+
 *Buyer management (incomplete)
+
 *Sales management and comprehensive reporting
