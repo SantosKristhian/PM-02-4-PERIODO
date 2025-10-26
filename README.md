@@ -4,10 +4,11 @@
 
 Projeto se trata de um sistem de gerenciamento de estoque, feito em JAVA + Springboot, com o objetivo de suprir a demanda de uma aplicação que contivesse a regra de negócio CurvaABC. Para isso foi implementado também, um sistema de vendas completo.
 
-*Gerenciamento e autenticação de usuários (com Roles)
+<p>
+  *Gerenciamento e autenticação de usuários (com Roles)
 *Gerenciamento de itens e categorias
 *Gerenciamento de comprador (incompleto)
-*Gerenciamento de vendas e relatórios completos
+*Gerenciamento de vendas e relatórios completos </p>
 
 ---------------------------------------------------------------------------
 
