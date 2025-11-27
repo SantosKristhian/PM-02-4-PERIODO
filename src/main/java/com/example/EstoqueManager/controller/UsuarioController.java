@@ -1,6 +1,8 @@
 
 package com.example.EstoqueManager.controller;
 
+import com.example.EstoqueManager.auth.LoginDTO;
+import com.example.EstoqueManager.auth.LoginService;
 import com.example.EstoqueManager.model.UsuarioModel;
 import com.example.EstoqueManager.service.UsuarioService;
 import jakarta.validation.Valid;
@@ -18,19 +20,15 @@ import java.util.List;
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
+    private final LoginService loginService;
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody UsuarioModel usuario) {
-        UsuarioModel usuarioEncontrado = usuarioService.autenticar(usuario.getLogin(), usuario.getSenha());
+    public ResponseEntity<String> logar(@RequestBody LoginDTO loginDTO) {
 
-        if (usuarioEncontrado == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("Login ou senha inválidos");
-        }
-
-        return ResponseEntity.ok(usuarioEncontrado);
+        String token = loginService.logar(loginDTO);
+        return new ResponseEntity<>(token, HttpStatus.OK);
     }
-
+    
     @GetMapping("/user/findAll")
     public ResponseEntity<List<UsuarioModel>> findAll() {
         return ResponseEntity.ok(usuarioService.findAll());

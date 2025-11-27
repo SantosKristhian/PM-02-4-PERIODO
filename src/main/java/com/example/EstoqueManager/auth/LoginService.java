@@ -37,7 +37,7 @@ public class LoginService {
 						loginDTO.getSenha()
 						)
 				);
-		UsuarioModel user = repository.findByUsername(loginDTO.getLogin()).get();
+		UsuarioModel user = repository.findByLogin(loginDTO.getLogin()).get();
 		String jwtToken = jwtService.generateToken(user);
 		return jwtToken;
 	}

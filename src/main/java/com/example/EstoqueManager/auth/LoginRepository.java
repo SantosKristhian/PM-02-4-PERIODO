@@ -8,6 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface LoginRepository extends JpaRepository<UsuarioModel, Long>{
 
-	public Optional<UsuarioModel> findByUsername(String login);
+	public Optional<UsuarioModel> findByLogin(String login);
 	
 }

@@ -28,7 +28,7 @@ public class UsuarioService {
         return usuarioRepository.findByLoginAndSenha(login, senha);
     }
 
-    public UsuarioModel findBy
+
 
     public List<UsuarioModel> findAll() {
         return usuarioRepository.findAll();
