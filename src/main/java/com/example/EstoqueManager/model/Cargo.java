@@ -1,8 +1,8 @@
 package com.example.EstoqueManager.model;
 
 public enum Cargo {
-    ADM("ROLE_ADMIN"),
-    VENDEDOR("ROLE_USER");
+    ADM("ADM"),
+    VENDEDOR("VENDEDOR");
 
     private String role;
 
