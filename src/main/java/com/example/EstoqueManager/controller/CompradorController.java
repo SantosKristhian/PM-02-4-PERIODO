@@ -13,7 +13,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/emanager")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin(origins = "*")
 public class CompradorController {
 
     private final CompradorService compradorService;
