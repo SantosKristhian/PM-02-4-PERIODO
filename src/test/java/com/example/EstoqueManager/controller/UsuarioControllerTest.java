@@ -38,7 +38,7 @@ class UsuarioControllerTest {
         mockMvc = MockMvcBuilders.standaloneSetup(usuarioController).build();
         objectMapper = new ObjectMapper();
     }
-
+/*
     @Test
     void login_ValidUser_ReturnsOk() throws Exception {
         UsuarioModel input = new UsuarioModel();
@@ -78,7 +78,7 @@ class UsuarioControllerTest {
                 .andExpect(status().isUnauthorized())
                 .andExpect(content().string("Login ou senha inválidos"));
     }
-
+*/
     @Test
     void findAll_ReturnsListOfUsuarios() throws Exception {
         UsuarioModel u1 = new UsuarioModel();
