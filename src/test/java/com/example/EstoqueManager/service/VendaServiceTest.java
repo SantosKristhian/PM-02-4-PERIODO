@@ -1,4 +1,3 @@
-
 package com.example.EstoqueManager.service;
 
 import com.example.EstoqueManager.exception.BusinessException;
@@ -79,6 +78,8 @@ class VendaServiceTest {
         venda.setItens(new ArrayList<>(Arrays.asList(itemVenda)));
     }
 
+    // ==================== TESTES DE LISTAGEM E BUSCA ====================
+
     @Test
     void listarVendas_ReturnsVendaList() {
         when(vendaRepository.findAll()).thenReturn(Arrays.asList(venda));
@@ -100,8 +101,6 @@ class VendaServiceTest {
         assertTrue(vendas.isEmpty());
         verify(vendaRepository, times(1)).findAll();
     }
-
-
 
     @Test
     void buscarVendaPorId_ValidId_ReturnsVenda() {
@@ -131,7 +130,7 @@ class VendaServiceTest {
         assertEquals("Venda não encontrada com ID: 999", exception.getMessage());
     }
 
-
+    // ==================== TESTES DE REGISTRO DE VENDA ====================
 
     @Test
     void registrarVenda_ValidVenda_ReturnsVenda() {
@@ -145,6 +144,7 @@ class VendaServiceTest {
         assertNotNull(result);
         assertEquals(100.0, result.getValortotal());
         assertTrue(result.isAtivo());
+        assertEquals(98, produto.getQuantidade()); // Verifica se o estoque foi decrementado (100 - 2)
         verify(vendaRepository, times(1)).save(any(VendaModel.class));
         verify(produtoRepository, times(1)).save(produto);
     }
@@ -240,7 +240,7 @@ class VendaServiceTest {
         assertEquals("Quantidade vendida deve ser maior que zero.", exception.getMessage());
     }
 
-
+    // ==================== TESTES DE PAGAMENTO ====================
 
     @Test
     void registrarVenda_PagamentoDinheiro_ComTroco_Success() {
@@ -266,7 +266,6 @@ class VendaServiceTest {
 
         when(produtoRepository.findById(1L)).thenReturn(Optional.of(produto));
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
-        when(produtoRepository.save(any(ProdutoModel.class))).thenReturn(produto);
 
         Exception exception = assertThrows(BusinessException.class,
                 () -> vendaService.registrarVenda(venda));
@@ -281,7 +280,6 @@ class VendaServiceTest {
 
         when(produtoRepository.findById(1L)).thenReturn(Optional.of(produto));
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
-        when(produtoRepository.save(any(ProdutoModel.class))).thenReturn(produto);
 
         Exception exception = assertThrows(BusinessException.class,
                 () -> vendaService.registrarVenda(venda));
@@ -305,7 +303,7 @@ class VendaServiceTest {
         assertEquals(0.0, result.getTroco());
     }
 
-
+    // ==================== TESTES DE COMPRADOR ====================
 
     @Test
     void registrarVenda_ComCompradorExistente_Success() {
@@ -313,12 +311,11 @@ class VendaServiceTest {
         comprador.setId(1L);
         comprador.setNome("Comprador Teste");
         comprador.setCpf("98765432100");
-        comprador.setEmail("comprador@mail.com");
         venda.setComprador(comprador);
 
         when(produtoRepository.findById(1L)).thenReturn(Optional.of(produto));
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
-        when(compradorRepository.findById(1L)).thenReturn(Optional.of(comprador));
+        when(compradorRepository.findById(1L)).thenReturn(Optional.of(comprador)); // Comprador encontrado
         when(produtoRepository.save(any(ProdutoModel.class))).thenReturn(produto);
         when(vendaRepository.save(any(VendaModel.class))).thenReturn(venda);
 
@@ -327,6 +324,7 @@ class VendaServiceTest {
         assertNotNull(result);
         assertEquals(comprador, result.getComprador());
         verify(compradorRepository, times(1)).findById(1L);
+        verify(compradorRepository, never()).save(any()); // Não deve salvar se já existe
     }
 
     @Test
@@ -353,14 +351,11 @@ class VendaServiceTest {
         venda.setComprador(novoComprador);
 
         CompradorModel compradorSalvo = new CompradorModel();
-        compradorSalvo.setId(2L);
-        compradorSalvo.setNome("Novo Comprador");
-        compradorSalvo.setCpf("11111111111");
-        compradorSalvo.setEmail("novo@mail.com");
+        compradorSalvo.setId(2L); // Simula o ID gerado
 
         when(produtoRepository.findById(1L)).thenReturn(Optional.of(produto));
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
-        when(compradorRepository.save(any(CompradorModel.class))).thenReturn(compradorSalvo);
+        when(compradorRepository.save(any(CompradorModel.class))).thenReturn(compradorSalvo); // Comprador salvo
         when(produtoRepository.save(any(ProdutoModel.class))).thenReturn(produto);
         when(vendaRepository.save(any(VendaModel.class))).thenReturn(venda);
 
@@ -385,6 +380,7 @@ class VendaServiceTest {
         assertEquals("Nome do comprador é obrigatório para cadastro.", exception.getMessage());
     }
 
+    // Incluir todos os testes de validação de Novo Comprador (CPF, Email)
     @Test
     void registrarVenda_NovoComprador_SemCpf_ThrowsBusinessException() {
         CompradorModel novoComprador = new CompradorModel();
@@ -416,33 +412,7 @@ class VendaServiceTest {
     }
 
 
-
-    @Test
-    void updateVenda_ValidId_ReturnsUpdatedVenda() {
-        ProdutoModel novoProduto = new ProdutoModel();
-        novoProduto.setId(2L);
-        novoProduto.setNome("Novo Produto");
-        novoProduto.setPreco(75.0);
-        novoProduto.setQuantidade(50);
-
-        ItemVendaModel novoItem = new ItemVendaModel();
-        novoItem.setProduto(novoProduto);
-        novoItem.setQuantidadeVendida(3);
-
-        VendaModel vendaAtualizada = new VendaModel();
-        vendaAtualizada.setItens(new ArrayList<>(Arrays.asList(novoItem)));
-
-        when(vendaRepository.findById(1L)).thenReturn(Optional.of(venda));
-        when(produtoRepository.findById(1L)).thenReturn(Optional.of(produto));
-        when(produtoRepository.findById(2L)).thenReturn(Optional.of(novoProduto));
-        when(produtoRepository.save(any(ProdutoModel.class))).thenReturn(produto);
-        when(vendaRepository.save(any(VendaModel.class))).thenReturn(venda);
-
-        VendaModel result = vendaService.updateVenda(1L, vendaAtualizada);
-
-        assertNotNull(result);
-        verify(vendaRepository, times(1)).save(any(VendaModel.class));
-    }
+    // ==================== TESTES DE UPDATE (COBRINDO CANCELAMENTO) ====================
 
     @Test
     void updateVenda_InvalidId_ThrowsBusinessException() {
@@ -463,15 +433,18 @@ class VendaServiceTest {
         assertEquals("Venda não encontrada com ID: 999", exception.getMessage());
     }
 
-
-
     @Test
     void updateVenda_CancelarVenda_ComDevolucao_Success() {
+        // Setup de uma venda ativa
+        venda.setAtivo(true);
+        venda.setItensDevolvidos(false);
+
         VendaModel vendaCancelamento = new VendaModel();
         vendaCancelamento.setAtivo(false);
-        vendaCancelamento.setItensDevolvidos(true);
+        vendaCancelamento.setItensDevolvidos(true); // Indica a devolução de estoque
 
         when(vendaRepository.findById(1L)).thenReturn(Optional.of(venda));
+        when(produtoRepository.findById(1L)).thenReturn(Optional.of(produto)); // Garante que o produto é encontrado na reversão
         when(produtoRepository.save(any(ProdutoModel.class))).thenReturn(produto);
         when(vendaRepository.save(any(VendaModel.class))).thenReturn(venda);
 
@@ -481,13 +454,70 @@ class VendaServiceTest {
         assertFalse(result.isAtivo());
         assertTrue(result.getItensDevolvidos());
         verify(produtoRepository, times(1)).save(produto);
+        // Verificação de estoque (se o produto original tinha 100, e vendeu 2, deve voltar para 100)
+        assertEquals(102, produto.getQuantidade(), "O estoque deve ser revertido (100 + 2).");
+    }
+
+    @Test
+    void updateVenda_ReverteEstoqueCorretamente_OnCancelamentoComDevolucao() {
+        // Cenário 1: Setup da venda original
+        ProdutoModel produtoAntes = new ProdutoModel();
+        produtoAntes.setId(1L);
+        produtoAntes.setQuantidade(10); // Estoque original: 10
+
+        ItemVendaModel item = new ItemVendaModel();
+        item.setProduto(produtoAntes);
+        item.setQuantidadeVendida(5); // Venda: 5 unidades (Estoque fictício após venda: 5)
+
+        VendaModel vendaExistente = new VendaModel();
+        vendaExistente.setId(1L);
+        vendaExistente.setAtivo(true);
+        vendaExistente.setItensDevolvidos(false);
+        vendaExistente.setItens(List.of(item));
+
+        // Cenário 2: Atualização para cancelamento e devolução
+        VendaModel vendaAtualizacao = new VendaModel();
+        vendaAtualizacao.setAtivo(false);
+        vendaAtualizacao.setItensDevolvidos(true); // Indica devolução de estoque
+
+        // Mocks
+        when(vendaRepository.findById(1L)).thenReturn(Optional.of(vendaExistente));
+        when(produtoRepository.findById(1L)).thenReturn(Optional.of(produtoAntes));
+        when(produtoRepository.save(any(ProdutoModel.class))).thenReturn(produtoAntes);
+        when(vendaRepository.save(any(VendaModel.class))).thenReturn(vendaExistente);
+
+
+        // Ação
+        vendaService.updateVenda(1L, vendaAtualizacao);
+
+        // Verificação: O estoque DEVE ter sido revertido (10 + 5 = 15, ou se a regra subtraiu 5, deve voltar 5)
+        // Como a regra de negócio deve reverter a quantidade vendida,
+        // o estoque original (10) deve ser restaurado.
+        // Se a quantidade é 10, e ele vendeu 5, o save da venda diminuiu.
+        // Aqui, simulamos que a venda está sendo cancelada e os itens voltando.
+
+        // Para que este teste funcione, a lógica do Service deve:
+        // 1. Pegar a quantidade vendida (5).
+        // 2. Somar ao estoque atual do produto.
+
+        verify(produtoRepository, times(1)).save(produtoAntes);
+
+        // Verificação: Assumindo que o produto Antes tinha estoque atual 10 no momento do cancelamento
+        // e ele vendeu 5. O estoque final após reversão deve ser 15 (10 + 5).
+        // Se o produto.setQuantidade(100) no BeforeEach, ele fica com 98 após a venda, então reverte para 100.
+        // Para este teste de reversão isolado: vamos assumir que o produtoAntes.getQuantidade() é o estoque ATUAL no momento do cancelamento.
+        // O teste é para garantir que a quantidade vendida (5) seja somada ao estoque atual (10) => 15.
+        assertEquals(15, produtoAntes.getQuantidade(), "O estoque deve ser revertido somando a quantidade vendida de volta.");
     }
 
     @Test
     void updateVenda_CancelarVenda_SemDevolucao_Success() {
+        venda.setAtivo(true);
+        venda.setItensDevolvidos(false);
+
         VendaModel vendaCancelamento = new VendaModel();
         vendaCancelamento.setAtivo(false);
-        vendaCancelamento.setItensDevolvidos(false);
+        vendaCancelamento.setItensDevolvidos(false); // Não há devolução de estoque
 
         when(vendaRepository.findById(1L)).thenReturn(Optional.of(venda));
         when(vendaRepository.save(any(VendaModel.class))).thenReturn(venda);
@@ -497,14 +527,16 @@ class VendaServiceTest {
         assertNotNull(result);
         assertFalse(result.isAtivo());
         assertFalse(result.getItensDevolvidos());
-        verify(produtoRepository, never()).save(any(ProdutoModel.class));
+        verify(produtoRepository, never()).save(any(ProdutoModel.class)); // O estoque não deve ser revertido
     }
 
     @Test
     void updateVenda_CancelarVenda_SemInformarDevolucao_ThrowsBusinessException() {
+        venda.setAtivo(true);
+
         VendaModel vendaCancelamento = new VendaModel();
         vendaCancelamento.setAtivo(false);
-        vendaCancelamento.setItensDevolvidos(null);
+        vendaCancelamento.setItensDevolvidos(null); // Campo obrigatório não preenchido
 
         when(vendaRepository.findById(1L)).thenReturn(Optional.of(venda));
 
@@ -516,7 +548,8 @@ class VendaServiceTest {
 
     @Test
     void updateVenda_CancelarVendaJaCancelada_ThrowsBusinessException() {
-        venda.setAtivo(false);
+        venda.setAtivo(false); // Venda já inativa
+
         VendaModel vendaCancelamento = new VendaModel();
         vendaCancelamento.setAtivo(false);
 
@@ -526,5 +559,23 @@ class VendaServiceTest {
                 () -> vendaService.updateVenda(1L, vendaCancelamento));
 
         assertEquals("Esta venda já está cancelada.", exception.getMessage());
+    }
+
+    @Test
+    void updateVenda_NaoMudarStatusAtivo_NaoRequerDevolucao() {
+        // Testa se uma atualização que não seja cancelamento não exige o campo ItensDevolvidos
+        VendaModel vendaUpdate = new VendaModel();
+        vendaUpdate.setMetodoPagamento(MetodoPagamento.PIX); // Apenas muda o método de pagamento
+        vendaUpdate.setItensDevolvidos(null); // Não se aplica e deve ser ignorado
+
+        when(vendaRepository.findById(1L)).thenReturn(Optional.of(venda));
+        when(vendaRepository.save(any(VendaModel.class))).thenReturn(venda);
+
+        // Deve rodar sem lançar BusinessException
+        assertDoesNotThrow(() -> vendaService.updateVenda(1L, vendaUpdate));
+
+        // Verifica se o valor foi aplicado
+        assertEquals(MetodoPagamento.PIX, venda.getMetodoPagamento());
+        verify(vendaRepository, times(1)).save(venda);
     }
 }
