@@ -24,121 +24,189 @@ class CategoriaServiceTest {
     @Mock
     private CategoriaRepository categoriaRepository;
 
+    private CategoriaModel categoria;
+
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+
+        categoria = new CategoriaModel();
+        categoria.setId(1L);
+        categoria.setNome("Eletrônicos");
     }
 
-    @Test
-    void findAll_ReturnsListOfCategories() {
-        // Cenário
-        CategoriaModel categoria1 = new CategoriaModel(1L, "Categoria A", List.of());
-        CategoriaModel categoria2 = new CategoriaModel(2L, "Categoria B", List.of());
-        when(categoriaRepository.findAll()).thenReturn(List.of(categoria1, categoria2));
-
-        // Ação
-        List<CategoriaModel> categorias = categoriaService.findAll();
-
-        // Verificação
-        assertNotNull(categorias);
-        assertEquals(2, categorias.size());
-        assertEquals("Categoria A", categorias.get(0).getNome());
-        assertEquals("Categoria B", categorias.get(1).getNome());
-    }
+    // ==================== TESTES DE FIND BY ID ====================
 
     @Test
     void findById_ValidId_ReturnsCategoria() {
-        // Cenário
-        CategoriaModel categoria = new CategoriaModel(1L, "Categoria A", List.of());
         when(categoriaRepository.findById(1L)).thenReturn(Optional.of(categoria));
-
-        // Ação
         CategoriaModel result = categoriaService.findById(1L);
-
-        // Verificação
         assertNotNull(result);
-        assertEquals(1L, result.getId());
-        assertEquals("Categoria A", result.getNome());
+        assertEquals("Eletrônicos", result.getNome());
+        verify(categoriaRepository, times(1)).findById(1L);
     }
 
     @Test
-    void findById_InvalidId_ThrowsResourceNotFoundException() {
-        // Cenário
-        when(categoriaRepository.findById(1L)).thenReturn(Optional.empty());
-
-        // Ação & Verificação
-        assertThrows(ResourceNotFoundException.class, () -> categoriaService.findById(1L));
+    void findById_InvalidId_ThrowsBusinessException() {
+        assertThrows(BusinessException.class, () -> categoriaService.findById(null));
+        assertThrows(BusinessException.class, () -> categoriaService.findById(-1L));
     }
+
+    @Test
+    void findById_NotFound_ThrowsResourceNotFoundException() {
+        when(categoriaRepository.findById(99L)).thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class, () -> categoriaService.findById(99L));
+    }
+
+    // ==================== TESTES DE SAVE (Com Validação de Duplicidade) ====================
 
     @Test
     void save_ValidCategoria_ReturnsSavedCategoria() {
-        // Cenário
-        CategoriaModel categoriaToSave = new CategoriaModel(null, "Categoria A", List.of());
-        CategoriaModel savedCategoria = new CategoriaModel(1L, "Categoria A", List.of());
-        when(categoriaRepository.save(categoriaToSave)).thenReturn(savedCategoria);
+        categoria.setId(null);
+        when(categoriaRepository.findByNome("Eletrônicos")).thenReturn(Optional.empty());
+        when(categoriaRepository.save(categoria)).thenReturn(categoria);
 
-        // Ação
-        CategoriaModel result = categoriaService.save(categoriaToSave);
+        CategoriaModel result = categoriaService.save(categoria);
 
-        // Verificação
         assertNotNull(result);
-        assertEquals(1L, result.getId());
-        assertEquals("Categoria A", result.getNome());
+        verify(categoriaRepository, times(1)).save(categoria);
     }
 
     @Test
     void save_NullCategoria_ThrowsBusinessException() {
-        // Ação & Verificação
-        assertThrows(BusinessException.class, () -> categoriaService.save(null));
+        Exception exception = assertThrows(BusinessException.class, () -> {
+            categoriaService.save(null);
+        });
+        assertEquals("Categoria não pode ser nula.", exception.getMessage());
     }
 
     @Test
+    void save_WithId_ThrowsBusinessException() {
+        // ID não deve ser enviado na criação
+        Exception exception = assertThrows(BusinessException.class, () -> {
+            categoriaService.save(categoria);
+        });
+        assertEquals("ID deve ser nulo ao criar uma nova categoria.", exception.getMessage());
+    }
+
+    @Test
+    void save_EmptyNome_ThrowsBusinessException() {
+        categoria.setId(null);
+        categoria.setNome("   ");
+
+        Exception exception = assertThrows(BusinessException.class, () -> {
+            categoriaService.save(categoria);
+        });
+        assertEquals("Nome da categoria é obrigatório.", exception.getMessage());
+    }
+
+    @Test
+    void save_NomeDuplicado_ThrowsBusinessException() {
+        categoria.setId(null);
+        when(categoriaRepository.findByNome("Eletrônicos")).thenReturn(Optional.of(categoria));
+
+        Exception exception = assertThrows(BusinessException.class, () -> {
+            categoriaService.save(categoria);
+        });
+
+        assertEquals("Já existe uma categoria com este nome.", exception.getMessage());
+        verify(categoriaRepository, never()).save(any());
+    }
+
+    // ==================== TESTES DE UPDATE BY ID (Com Validação de Duplicidade) ====================
+
+    @Test
+    void updateById_ValidUpdate_ReturnsUpdatedCategoria() {
+        CategoriaModel existing = new CategoriaModel();
+        existing.setId(1L);
+        existing.setNome("Nome Antigo");
+
+        CategoriaModel updateData = new CategoriaModel();
+        updateData.setNome("Nome Novo");
+
+        when(categoriaRepository.findById(1L)).thenReturn(Optional.of(existing));
+        // Checa se o nome existe, excluindo o ID atual (deve retornar empty)
+        when(categoriaRepository.findByNomeAndIdNot("Nome Novo", 1L)).thenReturn(Optional.empty());
+        when(categoriaRepository.save(any(CategoriaModel.class))).thenReturn(existing);
+
+        CategoriaModel result = categoriaService.updateById(1L, updateData);
+
+        assertNotNull(result);
+        assertEquals("Nome Novo", result.getNome());
+        verify(categoriaRepository, times(1)).findById(1L);
+        verify(categoriaRepository, times(1)).save(existing);
+    }
+
+    @Test
+    void updateById_InvalidId_ThrowsBusinessException() {
+        assertThrows(BusinessException.class, () -> categoriaService.updateById(null, categoria));
+    }
+
+    @Test
+    void updateById_NotFound_ThrowsResourceNotFoundException() {
+        when(categoriaRepository.findById(99L)).thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class, () -> categoriaService.updateById(99L, categoria));
+    }
+
+    @Test
+    void updateById_NullUpdateData_ThrowsBusinessException() {
+        when(categoriaRepository.findById(1L)).thenReturn(Optional.of(categoria));
+        assertThrows(BusinessException.class, () -> categoriaService.updateById(1L, null));
+    }
+
+    @Test
+    void updateById_EmptyNome_ThrowsBusinessException() {
+        CategoriaModel updateData = new CategoriaModel();
+        updateData.setNome(" ");
+
+        when(categoriaRepository.findById(1L)).thenReturn(Optional.of(categoria));
+        assertThrows(BusinessException.class, () -> categoriaService.updateById(1L, updateData));
+    }
+
+    @Test
+    void updateById_DuplicatedNome_ThrowsBusinessException() {
+        CategoriaModel existing = new CategoriaModel();
+        existing.setId(1L);
+
+        CategoriaModel other = new CategoriaModel();
+        other.setId(2L);
+        other.setNome("Nome Duplicado");
+
+        CategoriaModel updateData = new CategoriaModel();
+        updateData.setNome("Nome Duplicado");
+
+        when(categoriaRepository.findById(1L)).thenReturn(Optional.of(existing));
+        // Simula que o nome já existe e pertence a outra categoria (ID 2)
+        when(categoriaRepository.findByNomeAndIdNot("Nome Duplicado", 1L)).thenReturn(Optional.of(other));
+
+        Exception exception = assertThrows(BusinessException.class, () -> {
+            categoriaService.updateById(1L, updateData);
+        });
+
+        assertEquals("Já existe outra categoria com este nome.", exception.getMessage());
+    }
+
+    // ==================== TESTES DE DELETE ====================
+
+    @Test
     void deleteById_ValidId_DeletesCategoria() {
-        // Cenário
         when(categoriaRepository.existsById(1L)).thenReturn(true);
         doNothing().when(categoriaRepository).deleteById(1L);
 
-        // Ação
-        categoriaService.deleteById(1L);
+        assertDoesNotThrow(() -> categoriaService.deleteById(1L));
 
-        // Verificação
+        verify(categoriaRepository, times(1)).existsById(1L);
         verify(categoriaRepository, times(1)).deleteById(1L);
     }
 
     @Test
-    void deleteById_InvalidId_ThrowsResourceNotFoundException() {
-        // Cenário
-        when(categoriaRepository.existsById(1L)).thenReturn(false);
-
-        // Ação & Verificação
-        assertThrows(ResourceNotFoundException.class, () -> categoriaService.deleteById(1L));
+    void deleteById_InvalidId_ThrowsBusinessException() {
+        assertThrows(BusinessException.class, () -> categoriaService.deleteById(null));
     }
 
     @Test
-    void updateById_ValidIdAndCategoria_ReturnsUpdatedCategoria() {
-        // Cenário
-        CategoriaModel existingCategoria = new CategoriaModel(1L, "Categoria Antiga", List.of());
-        CategoriaModel updates = new CategoriaModel(null, "Categoria Atualizada", List.of());
-        CategoriaModel updatedCategoria = new CategoriaModel(1L, "Categoria Atualizada", List.of());
-        when(categoriaRepository.findById(1L)).thenReturn(Optional.of(existingCategoria));
-        when(categoriaRepository.save(existingCategoria)).thenReturn(updatedCategoria);
-
-        // Ação
-        CategoriaModel result = categoriaService.updateById(1L, updates);
-
-        // Verificação
-        assertNotNull(result);
-        assertEquals(1L, result.getId());
-        assertEquals("Categoria Atualizada", result.getNome());
-    }
-
-    @Test
-    void updateById_InvalidId_ThrowsResourceNotFoundException() {
-        // Cenário
-        CategoriaModel updates = new CategoriaModel(null, "Categoria Atualizada", List.of());
-        when(categoriaRepository.findById(1L)).thenReturn(Optional.empty());
-
-        // Ação & Verificação
-        assertThrows(ResourceNotFoundException.class, () -> categoriaService.updateById(1L, updates));
+    void deleteById_NotFound_ThrowsResourceNotFoundException() {
+        when(categoriaRepository.existsById(99L)).thenReturn(false);
+        assertThrows(ResourceNotFoundException.class, () -> categoriaService.deleteById(99L));
     }
 }
