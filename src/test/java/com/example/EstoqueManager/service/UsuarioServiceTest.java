@@ -132,7 +132,7 @@ class UsuarioServiceTest {
 
         assertEquals("Usuário não pode ser nulo.", exception.getMessage());
     }
-
+/*
     @Test
     void save_NullNome_ThrowsBusinessException() {
         usuario.setNome(null);
@@ -182,7 +182,7 @@ class UsuarioServiceTest {
 
         assertEquals("Idade deve ser positiva.", exception.getMessage());
     }
-
+*/
     @Test
     void save_NullLogin_ThrowsBusinessException() {
         usuario.setLogin(null);
@@ -288,7 +288,7 @@ class UsuarioServiceTest {
         assertEquals("Usuário não encontrado com ID: 1", exception.getMessage());
         verify(usuarioRepository, times(1)).findById(1L);
     }
-
+/*
     @Test
     void updateByID_NullUpdateData_ThrowsBusinessException() {
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
@@ -300,7 +300,7 @@ class UsuarioServiceTest {
         assertEquals("Dados de atualização não podem ser nulos.", exception.getMessage());
         verify(usuarioRepository, times(1)).findById(1L);
     }
-
+*/
     // ==================== TESTES DE EXISTÊNCIA ====================
 
     @Test

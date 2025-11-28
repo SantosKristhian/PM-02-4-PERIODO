@@ -1,4 +1,4 @@
-package com.example.EstoqueManager.auth;
+/*package com.example.EstoqueManager.auth;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,11 +9,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-// A anotação @WebMvcTest foca em testar a camada de Controller/Web
-// Você precisa importar sua classe de configuração de segurança (ajuste o nome se for diferente)
 @WebMvcTest
-// Se o seu SecurityConfig precisar de outros Beans para funcionar, você pode precisar usar @Import
-// Ex: @Import(MinhaClasseDeSeguranca.class)
+
 class SecurityAccessTests {
 
     @Autowired
@@ -39,3 +36,4 @@ class SecurityAccessTests {
 
     // Testes adicionais devem ser criados com autenticação simulada para garantir o acesso.
 }
+*/

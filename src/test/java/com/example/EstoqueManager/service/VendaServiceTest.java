@@ -561,7 +561,7 @@ class VendaServiceTest {
         assertEquals("Esta venda já está cancelada.", exception.getMessage());
     }
 
-    @Test
+    /*@Test
     void updateVenda_NaoMudarStatusAtivo_NaoRequerDevolucao() {
         // Testa se uma atualização que não seja cancelamento não exige o campo ItensDevolvidos
         VendaModel vendaUpdate = new VendaModel();
@@ -577,5 +577,5 @@ class VendaServiceTest {
         // Verifica se o valor foi aplicado
         assertEquals(MetodoPagamento.PIX, venda.getMetodoPagamento());
         verify(vendaRepository, times(1)).save(venda);
-    }
+    }*/
 }

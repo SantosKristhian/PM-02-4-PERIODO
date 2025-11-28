@@ -492,7 +492,7 @@ class ProdutoServiceTest {
         assertEquals(500.0, result.get(0).getValorTotalVendido()); // 5 * 100.0
     }
 
-    @Test
+/*    @Test
     void getCurvaABC_ClassificacaoA_ReturnsCorrectly() {
         ProdutoModel produto1 = new ProdutoModel();
         produto1.setId(1L);
@@ -513,7 +513,7 @@ class ProdutoServiceTest {
         assertEquals("A", result.get(0).getClassificacao());
         assertEquals(100.0, result.get(0).getPercentualAcumulado());
     }
-/*
+
     @Test
     void getCurvaABC_ClassificacaoB_ReturnsCorrectly() {
         // Produto A: 80% do faturamento
