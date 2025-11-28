@@ -1,4 +1,3 @@
-
 package com.example.EstoqueManager.service;
 
 import com.example.EstoqueManager.exception.BusinessException;
@@ -42,6 +41,11 @@ public class CategoriaService {
             throw new BusinessException("Nome da categoria é obrigatório.");
         }
 
+        // NOVO: Validação de nome duplicado
+        if (categoriaRepository.findByNome(categoria.getNome()).isPresent()) {
+            throw new BusinessException("Já existe uma categoria com este nome.");
+        }
+
         return categoriaRepository.save(categoria);
     }
 
@@ -68,6 +72,12 @@ public class CategoriaService {
 
         if (categoriaUpdated.getNome() == null || categoriaUpdated.getNome().trim().isEmpty()) {
             throw new BusinessException("Nome da categoria é obrigatório.");
+        }
+
+        // NOVO: Validação de nome duplicado em outra categoria
+        // O método findByNomeAndIdNot está no seu Repository
+        if (categoriaRepository.findByNomeAndIdNot(categoriaUpdated.getNome(), id).isPresent()) {
+            throw new BusinessException("Já existe outra categoria com este nome.");
         }
 
         CategoriaModel categoriaExistente = categoriaRepository.findById(id)
