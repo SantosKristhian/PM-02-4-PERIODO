@@ -32,7 +32,7 @@ class UsuarioServiceTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
 
-        // Configuração inicial de um usuário
+        // Configuração inicial de um usuário VÁLIDO
         usuario = new UsuarioModel();
         usuario.setId(1L);
         usuario.setNome("João Silva");
@@ -40,18 +40,15 @@ class UsuarioServiceTest {
         usuario.setIdade(30);
         usuario.setLogin("joao123");
         usuario.setSenha("senha123");
-        usuario.setCargo(Cargo.ADM); // Usando o valor válido da enum Cargo
+        usuario.setCargo(Cargo.ADM);
     }
+
+    // ==================== TESTES DE AUTENTICAÇÃO ====================
 
     @Test
     void autenticar_ValidLoginAndSenha_ReturnsUsuario() {
-        // Configuração do mock
         when(usuarioRepository.findByLoginAndSenha("joao123", "senha123")).thenReturn(usuario);
-
-        // Execução
         UsuarioModel result = usuarioService.autenticar("joao123", "senha123");
-
-        // Verificações
         assertNotNull(result);
         assertEquals("João Silva", result.getNome());
         verify(usuarioRepository, times(1)).findByLoginAndSenha("joao123", "senha123");
@@ -59,43 +56,32 @@ class UsuarioServiceTest {
 
     @Test
     void autenticar_InvalidLoginOrSenha_ReturnsNull() {
-        // Configuração do mock
         when(usuarioRepository.findByLoginAndSenha("loginErrado", "senhaErrada")).thenReturn(null);
-
-        // Execução
         UsuarioModel result = usuarioService.autenticar("loginErrado", "senhaErrada");
-
-        // Verificações
         assertNull(result);
         verify(usuarioRepository, times(1)).findByLoginAndSenha("loginErrado", "senhaErrada");
     }
 
+    // ==================== TESTES DE FIND ALL ====================
+
     @Test
     void findAll_ReturnsListOfUsuarios() {
-        // Configuração do mock
         List<UsuarioModel> usuarios = new ArrayList<>();
         usuarios.add(usuario);
         when(usuarioRepository.findAll()).thenReturn(usuarios);
-
-        // Execução
         List<UsuarioModel> result = usuarioService.findAll();
-
-        // Verificações
         assertNotNull(result);
         assertFalse(result.isEmpty());
         assertEquals(1, result.size());
         verify(usuarioRepository, times(1)).findAll();
     }
 
+    // ==================== TESTES DE FIND BY ID ====================
+
     @Test
     void findById_ValidId_ReturnsUsuario() {
-        // Configuração do mock
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
-
-        // Execução
         UsuarioModel result = usuarioService.findById(1L);
-
-        // Verificações
         assertNotNull(result);
         assertEquals("João Silva", result.getNome());
         verify(usuarioRepository, times(1)).findById(1L);
@@ -103,156 +89,240 @@ class UsuarioServiceTest {
 
     @Test
     void findById_InvalidId_ThrowsResourceNotFoundException() {
-        // Configuração do mock
         when(usuarioRepository.findById(1L)).thenReturn(Optional.empty());
-
-        // Execução e Verificação
         Exception exception = assertThrows(ResourceNotFoundException.class, () -> {
             usuarioService.findById(1L);
         });
-
-        // Atualize a mensagem esperada para coincidir com a mensagem real
         assertEquals("Usuário não encontrado com ID: 1", exception.getMessage());
         verify(usuarioRepository, times(1)).findById(1L);
     }
 
+    // ==================== TESTES DE SAVE (Criação e Validação) ====================
+
     @Test
     void save_ValidUsuario_ReturnsUsuario() {
-        // Configuração inicial de um novo usuário sem ID
-        usuario.setId(null); // ID deve ser nulo para simular a criação de um novo usuário
-
-        // Configuração do mock
+        usuario.setId(null);
         when(usuarioRepository.save(usuario)).thenReturn(usuario);
-
-        // Execução
         UsuarioModel result = usuarioService.save(usuario);
-
-        // Verificações
         assertNotNull(result);
         assertEquals("João Silva", result.getNome());
         verify(usuarioRepository, times(1)).save(usuario);
     }
 
     @Test
-    void save_InvalidUsuario_ThrowsBusinessException() {
-        // Configuração inicial de um usuário sem ID
-        usuario.setId(null); // O ID deve ser nulo para evitar a validação do ID
-
-        // Configurar um login duplicado
+    void save_InvalidUsuario_ThrowsBusinessException_LoginDuplicado() {
+        usuario.setId(null);
         when(usuarioRepository.findByLogin("joao123")).thenReturn(usuario);
 
-        // Execução e Verificação
         Exception exception = assertThrows(BusinessException.class, () -> {
             usuarioService.save(usuario);
         });
 
         assertEquals("Login já cadastrado no sistema.", exception.getMessage());
         verify(usuarioRepository, times(1)).findByLogin("joao123");
+        verify(usuarioRepository, never()).save(any());
+    }
+
+    // --- Novos Testes de Validação (Cobrindo 55% do validarUsuario) ---
+
+    @Test
+    void save_NullUsuario_ThrowsBusinessException() {
+        Exception exception = assertThrows(BusinessException.class,
+                () -> usuarioService.save(null));
+
+        assertEquals("Usuário não pode ser nulo.", exception.getMessage());
     }
 
     @Test
+    void save_NullNome_ThrowsBusinessException() {
+        usuario.setNome(null);
+
+        Exception exception = assertThrows(BusinessException.class,
+                () -> usuarioService.save(usuario));
+
+        assertEquals("Nome é obrigatório.", exception.getMessage());
+    }
+
+    @Test
+    void save_EmptyNome_ThrowsBusinessException() {
+        usuario.setNome("   ");
+
+        Exception exception = assertThrows(BusinessException.class,
+                () -> usuarioService.save(usuario));
+
+        assertEquals("Nome é obrigatório.", exception.getMessage());
+    }
+
+    @Test
+    void save_InvalidCpfFormat_ThrowsBusinessException() {
+        usuario.setCpf("123");
+
+        Exception exception = assertThrows(BusinessException.class,
+                () -> usuarioService.save(usuario));
+
+        assertEquals("CPF deve ter 11 dígitos.", exception.getMessage());
+    }
+
+    @Test
+    void save_NullIdade_ThrowsBusinessException() {
+        usuario.setIdade(null);
+
+        Exception exception = assertThrows(BusinessException.class,
+                () -> usuarioService.save(usuario));
+
+        assertEquals("Idade é obrigatória.", exception.getMessage());
+    }
+
+    @Test
+    void save_NegativeIdade_ThrowsBusinessException() {
+        usuario.setIdade(-5);
+
+        Exception exception = assertThrows(BusinessException.class,
+                () -> usuarioService.save(usuario));
+
+        assertEquals("Idade deve ser positiva.", exception.getMessage());
+    }
+
+    @Test
+    void save_NullLogin_ThrowsBusinessException() {
+        usuario.setLogin(null);
+
+        Exception exception = assertThrows(BusinessException.class,
+                () -> usuarioService.save(usuario));
+
+        assertEquals("Login é obrigatório.", exception.getMessage());
+    }
+
+    @Test
+    void save_NullSenha_ThrowsBusinessException() {
+        usuario.setSenha(null);
+
+        Exception exception = assertThrows(BusinessException.class,
+                () -> usuarioService.save(usuario));
+
+        assertEquals("Senha é obrigatória.", exception.getMessage());
+    }
+
+    @Test
+    void save_NullCargo_ThrowsBusinessException() {
+        usuario.setCargo(null);
+
+        Exception exception = assertThrows(BusinessException.class,
+                () -> usuarioService.save(usuario));
+
+        assertEquals("Cargo é obrigatório.", exception.getMessage());
+    }
+
+    // ==================== TESTES DE DELETE ====================
+
+    @Test
     void deleteById_ValidId_RemovesUsuario() {
-        // Mockando o comportamento correto do repositório
         when(usuarioRepository.existsById(1L)).thenReturn(true);
         doNothing().when(usuarioRepository).deleteById(1L);
 
-        // Execução do método a ser testado
         assertDoesNotThrow(() -> usuarioService.deleteById(1L));
 
-        // Verificações
         verify(usuarioRepository, times(1)).existsById(1L);
         verify(usuarioRepository, times(1)).deleteById(1L);
     }
 
     @Test
     void deleteById_InvalidId_ThrowsResourceNotFoundException() {
-        // Configuração do mock
         when(usuarioRepository.existsById(1L)).thenReturn(false);
 
-        // Execução e Verificação
         Exception exception = assertThrows(ResourceNotFoundException.class, () -> {
             usuarioService.deleteById(1L);
         });
 
-        // Corrigir a mensagem esperada
         assertEquals("Usuário não encontrado com ID: 1", exception.getMessage());
         verify(usuarioRepository, times(1)).existsById(1L);
     }
 
+    // ==================== TESTES DE UPDATE ====================
+
     @Test
     void updateByID_ValidId_UpdatesUsuario() {
+        // Setup inicial
+        UsuarioModel existingUsuario = new UsuarioModel();
+        existingUsuario.setId(1L);
+        existingUsuario.setNome("João Antigo");
+        existingUsuario.setLogin("antigo");
+        existingUsuario.setSenha("senhaAntiga");
+        existingUsuario.setCargo(Cargo.VENDEDOR);
+
+        // Dados de atualização
+        UsuarioModel usuarioUpdatedData = new UsuarioModel();
+        usuarioUpdatedData.setNome("João Atualizado");
+        usuarioUpdatedData.setCpf("12345678900");
+        usuarioUpdatedData.setIdade(35);
+        usuarioUpdatedData.setLogin("joao123"); // Login vai mudar, mas não é usado aqui
+        usuarioUpdatedData.setSenha("novaSenha");
+        usuarioUpdatedData.setCargo(Cargo.ADM);
+
         // Configuração do mock
-        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
-        when(usuarioRepository.save(usuario)).thenReturn(usuario);
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(existingUsuario));
+        when(usuarioRepository.save(existingUsuario)).thenReturn(existingUsuario);
 
-        // Criação de um usuário atualizado
-        UsuarioModel usuarioUpdated = new UsuarioModel();
-        usuarioUpdated.setNome("João Atualizado");
-        usuarioUpdated.setCpf("12345678900");
-        usuarioUpdated.setIdade(35);
-        usuarioUpdated.setLogin("joao123");
-        usuarioUpdated.setSenha("novaSenha");
-        usuarioUpdated.setCargo(Cargo.VENDEDOR); // Usando o valor VENDEDOR da enum
-
-        // Execução
-        UsuarioModel result = usuarioService.updateByID(1L, usuarioUpdated);
+        // Ação
+        UsuarioModel result = usuarioService.updateByID(1L, usuarioUpdatedData);
 
         // Verificações
         assertNotNull(result);
         assertEquals("João Atualizado", result.getNome());
         assertEquals(35, result.getIdade());
-        verify(usuarioRepository, times(1)).save(usuario);
+        assertEquals("novaSenha", result.getSenha(), "Senha deve ser atualizada");
+        assertEquals(Cargo.ADM, result.getCargo());
+
+        verify(usuarioRepository, times(1)).findById(1L);
+        verify(usuarioRepository, times(1)).save(existingUsuario);
     }
 
     @Test
     void updateByID_InvalidId_ThrowsResourceNotFoundException() {
-        // Configuração do mock
         when(usuarioRepository.findById(1L)).thenReturn(Optional.empty());
 
-        // Execução e Verificação
         Exception exception = assertThrows(ResourceNotFoundException.class, () -> {
             usuarioService.updateByID(1L, usuario);
         });
 
-        // Ajuste na mensagem esperada para refletir o valor real
         assertEquals("Usuário não encontrado com ID: 1", exception.getMessage());
         verify(usuarioRepository, times(1)).findById(1L);
     }
 
     @Test
+    void updateByID_NullUpdateData_ThrowsBusinessException() {
+        when(usuarioRepository.findById(1L)).thenReturn(Optional.of(usuario));
+
+        Exception exception = assertThrows(BusinessException.class, () -> {
+            usuarioService.updateByID(1L, null);
+        });
+
+        assertEquals("Dados de atualização não podem ser nulos.", exception.getMessage());
+        verify(usuarioRepository, times(1)).findById(1L);
+    }
+
+    // ==================== TESTES DE EXISTÊNCIA ====================
+
+    @Test
     void existemUsuarios_ReturnsTrue() {
         when(usuarioRepository.count()).thenReturn(1L);
-
         boolean result = usuarioService.existemUsuarios();
         assertTrue(result);
         verify(usuarioRepository, times(1)).count();
     }
 
-
     @Test
     void existeAdministrador_ReturnsTrue() {
-        // Mock para findAll() retornar uma lista com o usuário que tem cargo ADM
         when(usuarioRepository.findAll()).thenReturn(List.of(usuario));
-
         boolean result = usuarioService.existeAdministrador();
-
         assertTrue(result);
         verify(usuarioRepository, times(1)).findAll();
     }
 
     @Test
     void existeAdministrador_ReturnsFalse() {
-        // Criar um usuário sem cargo ADM
         UsuarioModel usuarioVendedor = new UsuarioModel();
-        usuarioVendedor.setId(2L);
-        usuarioVendedor.setNome("Maria Santos");
-        usuarioVendedor.setCpf("98765432100");
-        usuarioVendedor.setIdade(25);
-        usuarioVendedor.setLogin("maria123");
-        usuarioVendedor.setSenha("senha456");
         usuarioVendedor.setCargo(Cargo.VENDEDOR);
-
-        // Mock para findAll() retornar uma lista com apenas o vendedor
         when(usuarioRepository.findAll()).thenReturn(List.of(usuarioVendedor));
 
         boolean result = usuarioService.existeAdministrador();
@@ -263,7 +333,6 @@ class UsuarioServiceTest {
 
     @Test
     void existeAdministrador_EmptyList_ReturnsFalse() {
-        // Mock para findAll() retornar lista vazia
         when(usuarioRepository.findAll()).thenReturn(List.of());
 
         boolean result = usuarioService.existeAdministrador();
@@ -271,5 +340,4 @@ class UsuarioServiceTest {
         assertFalse(result);
         verify(usuarioRepository, times(1)).findAll();
     }
-
 }
