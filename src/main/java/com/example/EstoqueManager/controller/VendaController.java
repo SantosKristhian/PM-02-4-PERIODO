@@ -17,7 +17,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/emanager")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "*", allowedHeaders = "*", allowCredentials = "false")
 public class VendaController {
 
     private final VendaService vendaService;

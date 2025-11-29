@@ -13,7 +13,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/emanager")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "*", allowedHeaders = "*", allowCredentials = "false")
 public class CategoriaController {
 
     private final CategoriaService categoriaService;
