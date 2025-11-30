@@ -1,4 +1,4 @@
-package com.example.EstoqueManager.auth;
+package com.example.EstoqueManager.dto;
 
 import lombok.Getter;
 import lombok.Setter;

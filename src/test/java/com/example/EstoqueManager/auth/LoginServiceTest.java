@@ -3,8 +3,10 @@ package com.example.EstoqueManager.auth;
 import com.example.EstoqueManager.config.JwtServiceGenerator;
 import com.example.EstoqueManager.model.UsuarioModel;
 // Certifique-se de que o import para o LoginDTO está correto:
-import com.example.EstoqueManager.auth.LoginDTO;
+import com.example.EstoqueManager.dto.LoginDTO;
 
+import com.example.EstoqueManager.repository.LoginRepository;
+import com.example.EstoqueManager.service.LoginService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

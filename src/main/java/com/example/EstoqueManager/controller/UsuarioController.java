@@ -1,8 +1,8 @@
 
 package com.example.EstoqueManager.controller;
 
-import com.example.EstoqueManager.auth.LoginDTO;
-import com.example.EstoqueManager.auth.LoginService;
+import com.example.EstoqueManager.dto.LoginDTO;
+import com.example.EstoqueManager.service.LoginService;
 import com.example.EstoqueManager.model.UsuarioModel;
 import com.example.EstoqueManager.service.UsuarioService;
 import jakarta.validation.Valid;
