@@ -1,8 +1,6 @@
 package com.example.EstoqueManager.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -14,12 +12,11 @@ import java.util.Collection;
 import java.util.List;
 
 @Entity
-@Table (name = "usuario_table")
+@Table(name = "usuario_table")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-
 public class UsuarioModel implements UserDetails {
 
     @Id
@@ -46,10 +43,9 @@ public class UsuarioModel implements UserDetails {
     @Column(nullable = false)
     private Cargo cargo;
 
-    @JsonIgnore
+    @JsonManagedReference("usuario-venda")
     @OneToMany(mappedBy = "usuario")
     private List<VendaModel> vendas;
-
 
     @JsonIgnore
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -67,6 +63,4 @@ public class UsuarioModel implements UserDetails {
     public String getUsername() {
         return login;
     }
-
-
 }

@@ -1,64 +1,57 @@
-    // VendaModel.java
-    package com.example.EstoqueManager.model;
+package com.example.EstoqueManager.model;
 
-    import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-    import jakarta.persistence.*;
-    import lombok.Getter;
-    import lombok.Setter;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
-    import java.time.LocalDate;
-    import java.time.LocalDateTime;
-    import java.util.List;
+import java.time.LocalDateTime;
+import java.util.List;
 
+@Entity
+@Getter
+@Setter
+@Table(name = "venda_table")
+public class VendaModel {
 
-// ... existing code ...
-    import java.time.LocalDate;
-    import java.time.LocalDateTime;
-    import java.util.List;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    @Entity
-    @Getter
-    @Setter
-    @Table(name="venda_table")
-    public class VendaModel {
+    @Column(nullable = false)
+    private LocalDateTime data;
 
-        @Id
-        @GeneratedValue(strategy = GenerationType.IDENTITY)
-        private Long id;
+    @Column(nullable = false)
+    private double valortotal;
 
-        @Column(nullable = false)
-        private LocalDateTime data;
+    @Column(nullable = false)
+    private boolean ativo;
 
-        @Column(nullable = false)
-        private double valortotal;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private MetodoPagamento metodoPagamento;
 
-        @Column(nullable = false)
-        private boolean ativo;
+    @Column(nullable = true)
+    private Double valorPago;
 
-        @Enumerated(EnumType.STRING)
-        @Column(nullable = false)
-        private MetodoPagamento metodoPagamento;
+    @Column(nullable = true)
+    private Double troco;
 
-        @Column(nullable = true)
-        private Double valorPago; // Valor que o cliente pagou (usado para dinheiro)
+    @Column(nullable = false)
+    private Boolean itensDevolvidos = false;
 
-        @Column(nullable = true)
-        private Double troco; // Troco calculado automaticamente
+    @JsonBackReference("usuario-venda")
+    @ManyToOne
+    @JoinColumn(name = "usuario_id", nullable = false)
+    private UsuarioModel usuario;
 
-        @Column(nullable = false)
-        private Boolean itensDevolvidos = false; // Controla se os itens foram devolvidos ao estoque no cancelamento
+    @JsonBackReference("comprador-venda")
+    @ManyToOne
+    @JoinColumn(name = "comprador_id")
+    private CompradorModel comprador;
 
-
-        @ManyToOne
-        @JsonIgnoreProperties({"cpf", "idade", "login", "senha", "cargo", "vendas"})
-        @JoinColumn(name = "usuario_id", nullable = false)
-        private UsuarioModel usuario;
-
-        @ManyToOne
-        @JsonIgnoreProperties("vendas")
-        private CompradorModel comprador;
-
-        @JsonIgnoreProperties({"venda"})
-        @OneToMany(mappedBy = "venda", cascade = CascadeType.ALL, orphanRemoval = true)
-        private List<ItemVendaModel> itens;
-    }
+    @JsonManagedReference("venda-item")
+    @OneToMany(mappedBy = "venda", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ItemVendaModel> itens;
+}

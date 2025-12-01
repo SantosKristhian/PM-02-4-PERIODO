@@ -1,7 +1,9 @@
 //AuthenticationService.java
-package com.example.EstoqueManager.auth;
+package com.example.EstoqueManager.service;
 
+import com.example.EstoqueManager.dto.LoginDTO;
 import com.example.EstoqueManager.model.UsuarioModel;
+import com.example.EstoqueManager.repository.LoginRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

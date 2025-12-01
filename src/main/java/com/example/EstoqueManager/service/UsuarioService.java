@@ -6,6 +6,7 @@ import com.example.EstoqueManager.model.Cargo;
 import com.example.EstoqueManager.model.UsuarioModel;
 import com.example.EstoqueManager.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,17 +16,20 @@ import java.util.List;
 public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UsuarioModel autenticar(String login, String senha) {
-        if (login == null || login.trim().isEmpty()) {
-            throw new BusinessException("Login é obrigatório.");
+    UsuarioModel autenticar(String login, String senha) {
+        UsuarioModel usuario = usuarioRepository.findByLogin(login);
+
+        if (usuario == null) {
+            throw new BusinessException("Login inválido.");
         }
 
-        if (senha == null || senha.trim().isEmpty()) {
-            throw new BusinessException("Senha é obrigatória.");
+        if (!passwordEncoder.matches(senha, usuario.getSenha())) {
+            throw new BusinessException("Senha inválida.");
         }
 
-        return usuarioRepository.findByLoginAndSenha(login, senha);
+        return usuario;
     }
 
 
@@ -50,10 +54,12 @@ public class UsuarioService {
             throw new BusinessException("ID deve ser nulo ao criar um novo usuário.");
         }
 
-        // Verificar se login já existe
         if (usuarioRepository.findByLogin(usuario.getLogin()) != null) {
             throw new BusinessException("Login já cadastrado no sistema.");
         }
+
+
+        usuario.setSenha(passwordEncoder.encode(usuario.getSenha()));
 
         return usuarioRepository.save(usuario);
     }
@@ -91,9 +97,8 @@ public class UsuarioService {
         usuarioExistente.setCpf(usuarioUpdated.getCpf());
         usuarioExistente.setIdade(usuarioUpdated.getIdade());
         usuarioExistente.setLogin(usuarioUpdated.getLogin());
-        usuarioExistente.setSenha(usuarioUpdated.getSenha());
+        usuarioExistente.setSenha(passwordEncoder.encode(usuarioUpdated.getSenha()));
         usuarioExistente.setCargo(usuarioUpdated.getCargo());
-
         return usuarioRepository.save(usuarioExistente);
     }
 

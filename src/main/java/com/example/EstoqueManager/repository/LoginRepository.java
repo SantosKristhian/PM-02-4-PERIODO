@@ -1,4 +1,4 @@
-package com.example.EstoqueManager.auth;
+package com.example.EstoqueManager.repository;
 
 import java.util.Optional;
 

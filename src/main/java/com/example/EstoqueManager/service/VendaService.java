@@ -1,5 +1,6 @@
 package com.example.EstoqueManager.service;
 
+import com.example.EstoqueManager.dto.VendaRequestDTO;
 import com.example.EstoqueManager.exception.BusinessException;
 import com.example.EstoqueManager.exception.ResourceNotFoundException;
 import com.example.EstoqueManager.model.*;
@@ -12,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -67,6 +69,130 @@ public class VendaService {
 
         return vendaRepository.save(venda);
     }
+
+
+    @Transactional
+    public VendaModel criarVendaAPartirDTO(VendaRequestDTO vendaDTO, Long usuarioId) {
+        // Validações básicas do DTO
+        if (vendaDTO == null) {
+            throw new BusinessException("Dados da venda são obrigatórios.");
+        }
+
+        if (vendaDTO.getMetodoPagamento() == null) {
+            throw new BusinessException("Método de pagamento é obrigatório.");
+        }
+
+        if (vendaDTO.getItens() == null || vendaDTO.getItens().isEmpty()) {
+            throw new BusinessException("A venda deve conter pelo menos um item.");
+        }
+
+        // Validação para pagamento em dinheiro
+        if (vendaDTO.getMetodoPagamento() == MetodoPagamento.DINHEIRO) {
+            if (vendaDTO.getValorPago() == null) {
+                throw new BusinessException("Valor pago é obrigatório para pagamento em dinheiro.");
+            }
+        }
+
+        // Busca e valida usuário
+        UsuarioModel usuario = usuarioRepository.findById(usuarioId)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com ID: " + usuarioId));
+
+        // Cria a venda base
+        VendaModel venda = new VendaModel();
+        venda.setData(LocalDateTime.now());
+        venda.setUsuario(usuario);
+        venda.setAtivo(true);
+        venda.setItensDevolvidos(false);
+        venda.setMetodoPagamento(vendaDTO.getMetodoPagamento());
+        venda.setValorPago(vendaDTO.getValorPago());
+
+        // Processa comprador (se fornecido)
+        if (vendaDTO.getCompradorId() != null) {
+            CompradorModel comprador = compradorRepository.findById(vendaDTO.getCompradorId())
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Comprador não encontrado com ID: " + vendaDTO.getCompradorId()));
+            venda.setComprador(comprador);
+        }
+
+        // Processa itens da venda
+        List<ItemVendaModel> itens = new ArrayList<>();
+        double total = 0.0;
+
+        for (VendaRequestDTO.ItemVendaRequestDTO itemDTO : vendaDTO.getItens()) {
+            // Busca produto
+            ProdutoModel produto = produtoRepository.findById(itemDTO.getProdutoId())
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Produto não encontrado com ID: " + itemDTO.getProdutoId()));
+
+            // Valida produto
+            validarProdutoParaVenda(produto, itemDTO.getQuantidadeVendida());
+
+            // Cria item de venda
+            ItemVendaModel item = new ItemVendaModel();
+            item.setProduto(produto);
+            item.setVenda(venda);
+            item.setQuantidadeVendida(itemDTO.getQuantidadeVendida());
+
+            // Define preço: usa o fornecido ou o preço atual do produto
+            Double precoVendido = itemDTO.getPrecoVendido() != null ?
+                    itemDTO.getPrecoVendido() : produto.getPreco();
+            item.setPrecoVendido(precoVendido);
+
+            itens.add(item);
+
+            // Calcula subtotal
+            total += precoVendido * itemDTO.getQuantidadeVendida();
+
+            // Atualiza estoque
+            produto.setQuantidade(produto.getQuantidade() - itemDTO.getQuantidadeVendida());
+            produtoRepository.save(produto);
+        }
+
+        // Configura venda
+        venda.setItens(itens);
+        venda.setValortotal(total);
+
+        // Processa informações de pagamento
+        if (venda.getMetodoPagamento() == MetodoPagamento.DINHEIRO) {
+            if (venda.getValorPago() == null) {
+                throw new BusinessException("Valor pago é obrigatório para pagamento em dinheiro.");
+            }
+
+            if (venda.getValorPago() < total) {
+                throw new BusinessException(
+                        String.format("Valor pago (R$ %.2f) é menor que o total da venda (R$ %.2f)",
+                                venda.getValorPago(), total));
+            }
+
+            // Calcula troco
+            venda.setTroco(venda.getValorPago() - total);
+        } else {
+            // Para outros métodos, o valor pago é igual ao total
+            venda.setValorPago(total);
+            venda.setTroco(0.0);
+        }
+
+        // Validações finais
+        if (venda.getUsuario() == null) {
+            throw new BusinessException("Usuário responsável pela venda é obrigatório.");
+        }
+
+        return vendaRepository.save(venda);
+    }
+
+    // Método auxiliar para validar produto (pode já existir no seu service)
+    private void validarProdutoParaVenda(ProdutoModel produto, Integer quantidade) {
+        if (!produto.getAtivo()) {
+            throw new BusinessException("Produto " + produto.getNome() + " está inativo.");
+        }
+
+        if (produto.getQuantidade() < quantidade) {
+            throw new BusinessException(
+                    String.format("Estoque insuficiente para produto %s. Disponível: %d, Solicitado: %d",
+                            produto.getNome(), produto.getQuantidade(), quantidade));
+        }
+    }
+
 
     private void processarPagamento(VendaModel venda) {
         if (venda.getMetodoPagamento() == MetodoPagamento.DINHEIRO) {
