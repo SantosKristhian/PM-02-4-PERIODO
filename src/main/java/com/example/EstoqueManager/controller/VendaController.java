@@ -1,6 +1,6 @@
 package com.example.EstoqueManager.controller;
 
-import com.example.EstoqueManager.dto.ProdutoCurvaABCDTO;
+import com.example.EstoqueManager.dto.VendaRequestDTO;
 import com.example.EstoqueManager.model.VendaModel;
 import com.example.EstoqueManager.model.UsuarioModel;
 import com.example.EstoqueManager.service.ProdutoService;
@@ -38,12 +38,17 @@ public class VendaController {
     @PostMapping("/venda/save/{usuarioId}")
     public ResponseEntity<VendaModel> criarVenda(
             @PathVariable Long usuarioId,
-            @Valid @RequestBody VendaModel venda) {
+            @Valid @RequestBody VendaRequestDTO vendaRequestDTO) {
 
-        UsuarioModel usuario = usuarioService.findById(usuarioId);
-        venda.setUsuario(usuario);
+        // Log para debug
+        System.out.println("Recebendo vendaDTO: " + vendaRequestDTO);
+        System.out.println("compradorId: " + vendaRequestDTO.getCompradorId());
+        System.out.println("metodoPagamento: " + vendaRequestDTO.getMetodoPagamento());
+        System.out.println("itens size: " + (vendaRequestDTO.getItens() != null ? vendaRequestDTO.getItens().size() : 0));
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(vendaService.registrarVenda(venda));
+        VendaModel venda = vendaService.criarVendaAPartirDTO(vendaRequestDTO, usuarioId);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(venda);
     }
 
     @PutMapping("/venda/update/{id}")

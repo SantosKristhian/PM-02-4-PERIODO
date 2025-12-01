@@ -1,8 +1,9 @@
 package com.example.EstoqueManager.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.util.List;
 
 @Entity
@@ -26,7 +27,7 @@ public class CompradorModel {
     @Column(nullable = false, unique = true)
     private String email;
 
-    @JsonIgnoreProperties({"comprador"})
+    @JsonManagedReference("comprador-venda")
     @OneToMany(mappedBy = "comprador", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<VendaModel> vendas;
 }

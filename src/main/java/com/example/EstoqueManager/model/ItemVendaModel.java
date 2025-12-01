@@ -1,6 +1,6 @@
 package com.example.EstoqueManager.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
@@ -17,8 +17,8 @@ public class ItemVendaModel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JsonBackReference("venda-item")
     @ManyToOne(fetch = FetchType.LAZY)
-    @JsonIgnore
     @JoinColumn(name = "venda_id", nullable = false)
     private VendaModel venda;
 
@@ -31,6 +31,5 @@ public class ItemVendaModel {
     private Integer quantidadeVendida;
 
     @Column(nullable = true)
-        private Double precoVendido;
-
+    private Double precoVendido;
 }

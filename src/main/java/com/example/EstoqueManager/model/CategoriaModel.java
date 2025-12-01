@@ -1,6 +1,7 @@
 package com.example.EstoqueManager.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -25,7 +26,7 @@ public class CategoriaModel {
     @Column(nullable = false, unique = true)
     private String nome;
 
-    @JsonIgnoreProperties("categoria")
+    @JsonManagedReference("categoria-produto")
     @OneToMany(mappedBy = "categoria", cascade = CascadeType.ALL)
     private List<ProdutoModel> produtos;
 }

@@ -1,5 +1,6 @@
 package com.example.EstoqueManager.model;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
@@ -35,11 +36,11 @@ public class ProdutoModel {
     private Double preco;
 
     @Column(nullable = false)
-    private Boolean ativo = true; // NOVO CAMPO
+    private Boolean ativo = true;
 
     @NotNull(message = "Categoria é obrigatória")
+    @JsonBackReference("categoria-produto")
     @ManyToOne
-    @JsonIgnoreProperties("produtos")
     @JoinColumn(name = "pcategoriaId", nullable = false)
     private CategoriaModel categoria;
 
