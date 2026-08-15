@@ -1,6 +1,7 @@
 package com.example.EstoqueManager.service;
 
 import com.example.EstoqueManager.dto.ProdutoCurvaABCDTO;
+import com.example.EstoqueManager.dto.ProdutoResponseDTO;
 import com.example.EstoqueManager.exception.BusinessException;
 import com.example.EstoqueManager.exception.ResourceNotFoundException;
 import com.example.EstoqueManager.model.ItemVendaModel;
@@ -195,5 +196,48 @@ public class ProdutoService {
         if (produto.getCategoria() == null || produto.getCategoria().getId() == null) {
             throw new BusinessException("Categoria é obrigatória.");
         }
+    }
+
+    public List<ProdutoResponseDTO> findAllComCategoria() {
+        List<ProdutoModel> produtos = produtoRepository.findAll();
+        return produtos.stream()
+                .map(this::converterParaDTO)
+                .collect(Collectors.toList());
+    }
+
+    public ProdutoResponseDTO findByIdComCategoria(Long id) {
+        ProdutoModel produto = produtoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Produto não encontrado com ID: " + id));
+        return converterParaDTO(produto);
+    }
+
+
+    public ProdutoResponseDTO converterParaDTO(ProdutoModel produto) {
+        ProdutoResponseDTO dto = new ProdutoResponseDTO();
+        dto.setId(produto.getId());
+        dto.setNome(produto.getNome());
+        dto.setQuantidade(produto.getQuantidade());
+        dto.setPreco(produto.getPreco());
+        dto.setAtivo(produto.getAtivo());
+        dto.setDataUltimaAlteracao(produto.getDataUltimaAlteracao());
+
+        // Categoria
+        if (produto.getCategoria() != null) {
+            ProdutoResponseDTO.CategoriaResumoDTO categoriaDTO = new ProdutoResponseDTO.CategoriaResumoDTO();
+            categoriaDTO.setId(produto.getCategoria().getId());
+            categoriaDTO.setNome(produto.getCategoria().getNome());
+            dto.setCategoria(categoriaDTO);
+        }
+
+        // Usuário
+        if (produto.getUsuarioUltimaAlteracao() != null) {
+            ProdutoResponseDTO.UsuarioResumoDTO usuarioDTO = new ProdutoResponseDTO.UsuarioResumoDTO();
+            usuarioDTO.setId(produto.getUsuarioUltimaAlteracao().getId());
+            usuarioDTO.setNome(produto.getUsuarioUltimaAlteracao().getNome());
+            usuarioDTO.setUsername(produto.getUsuarioUltimaAlteracao().getLogin());
+            dto.setUsuarioUltimaAlteracao(usuarioDTO);
+        }
+
+        return dto;
     }
 }
