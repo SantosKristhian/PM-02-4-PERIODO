@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,6 +19,7 @@ import java.util.List;
 @RequestMapping("/api/emanager")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*", allowedHeaders = "*", allowCredentials = "false")
+@PreAuthorize("hasAnyAuthority('ADM','VENDEDOR')")
 public class ProdutoController {
 
     private final ProdutoService produtoService;
@@ -60,12 +62,14 @@ public class ProdutoController {
         return ResponseEntity.ok(produtoDTO);
     }
 
+    @PreAuthorize("hasAuthority('ADM')")
     @GetMapping("/produto/curva-abc")
     public ResponseEntity<List<ProdutoCurvaABCDTO>> getCurvaABC() {
         List<ProdutoCurvaABCDTO> curvaABC = produtoService.getCurvaABC();
         return ResponseEntity.ok(curvaABC);
     }
 
+    @PreAuthorize("hasAuthority('ADM')")
     @DeleteMapping("/produto/delete/{id}")
     public ResponseEntity<Void> deleteById(@PathVariable Long id) {
         produtoService.deleteById(id);

@@ -1,5 +1,6 @@
 package com.example.EstoqueManager.service;
 
+import com.example.EstoqueManager.dto.UsuarioResumoDTO;
 import com.example.EstoqueManager.exception.BusinessException;
 import com.example.EstoqueManager.exception.ResourceNotFoundException;
 import com.example.EstoqueManager.model.Cargo;
@@ -36,6 +37,12 @@ public class UsuarioService {
 
     public List<UsuarioModel> findAll() {
         return usuarioRepository.findAll();
+    }
+
+    public List<UsuarioResumoDTO> findAllResumido() {
+        return usuarioRepository.findAll().stream()
+                .map(u -> new UsuarioResumoDTO(u.getId(), u.getNome()))
+                .toList();
     }
 
     public UsuarioModel findById(Long id) {

@@ -2,6 +2,7 @@
 package com.example.EstoqueManager.controller;
 
 import com.example.EstoqueManager.dto.LoginDTO;
+import com.example.EstoqueManager.dto.UsuarioResumoDTO;
 import com.example.EstoqueManager.service.LoginService;
 import com.example.EstoqueManager.model.UsuarioModel;
 import com.example.EstoqueManager.service.UsuarioService;
@@ -9,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,16 +31,25 @@ public class UsuarioController {
         return new ResponseEntity<>(token, HttpStatus.OK);
     }
     
+    @PreAuthorize("hasAuthority('ADM')")
     @GetMapping("/user/findAll")
     public ResponseEntity<List<UsuarioModel>> findAll() {
         return ResponseEntity.ok(usuarioService.findAll());
     }
 
+    @PreAuthorize("hasAnyAuthority('ADM','VENDEDOR')")
+    @GetMapping("/user/findAllResumido")
+    public ResponseEntity<List<UsuarioResumoDTO>> findAllResumido() {
+        return ResponseEntity.ok(usuarioService.findAllResumido());
+    }
+
+    @PreAuthorize("hasAuthority('ADM')")
     @GetMapping("/user/findById/{id}")
     public ResponseEntity<UsuarioModel> findById(@PathVariable Long id) {
         return ResponseEntity.ok(usuarioService.findById(id));
     }
 
+    @PreAuthorize("hasAuthority('ADM')")
     @PostMapping("/user/save")
     public ResponseEntity<UsuarioModel> save(@Valid @RequestBody UsuarioModel usuario) {
         return ResponseEntity.status(HttpStatus.CREATED).body(usuarioService.save(usuario));
@@ -55,12 +66,14 @@ public class UsuarioController {
     }
 
 
+    @PreAuthorize("hasAuthority('ADM')")
     @DeleteMapping("/user/delete/{id}")
     public ResponseEntity<Void> deleteById(@PathVariable Long id) {
         usuarioService.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("hasAuthority('ADM')")
     @PutMapping("/user/update/{id}")
     public ResponseEntity<UsuarioModel> update(
             @PathVariable Long id,
