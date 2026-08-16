@@ -3,6 +3,7 @@ package com.example.EstoqueManager.config;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -43,6 +44,14 @@ public class GlobalExceptionHandler {
 		Map<String, String> erro = new HashMap<>();
 		erro.put("error", "Acesso negado: voce nao tem permissao para executar esta acao.");
 		return new ResponseEntity<Map<String, String>>(erro, HttpStatus.FORBIDDEN);
+	}
+
+	//TRATAMENTO DE VIOLACAO DE INTEGRIDADE REFERENCIAL (ex: excluir categoria com produtos vinculados)
+	@ExceptionHandler(DataIntegrityViolationException.class)
+	public ResponseEntity<Map<String, String>> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+		Map<String, String> erro = new HashMap<>();
+		erro.put("error", "Não é possível concluir a operação: este registro está vinculado a outros dados do sistema.");
+		return new ResponseEntity<Map<String, String>>(erro, HttpStatus.CONFLICT);
 	}
 
 	@ExceptionHandler(Exception.class)
