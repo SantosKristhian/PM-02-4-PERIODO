@@ -54,6 +54,7 @@ public class UsuarioModel implements UserDetails {
         return authorities;
     }
 
+    @JsonIgnore
     @Override
     public String getPassword() {
         return senha;
