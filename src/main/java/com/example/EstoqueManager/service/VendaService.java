@@ -1,6 +1,7 @@
 package com.example.EstoqueManager.service;
 
 import com.example.EstoqueManager.dto.VendaRequestDTO;
+import com.example.EstoqueManager.dto.auditoria.VendaAuditSnapshot;
 import com.example.EstoqueManager.exception.BusinessException;
 import com.example.EstoqueManager.exception.ResourceNotFoundException;
 import com.example.EstoqueManager.model.*;
@@ -24,6 +25,7 @@ public class VendaService {
     private final ProdutoRepository produtoRepository;
     private final UsuarioRepository usuarioRepository;
     private final CompradorRepository compradorRepository;
+    private final AuditoriaService auditoriaService;
 
     public List<VendaModel> listarVendas() {
         return vendaRepository.findAll();
@@ -177,7 +179,9 @@ public class VendaService {
             throw new BusinessException("Usuário responsável pela venda é obrigatório.");
         }
 
-        return vendaRepository.save(venda);
+        VendaModel salva = vendaRepository.save(venda);
+        auditoriaService.registrar("VENDA", salva.getId(), AcaoAuditoria.CRIACAO, null, VendaAuditSnapshot.de(salva));
+        return salva;
     }
 
     // Método auxiliar para validar produto (pode já existir no seu service)
@@ -229,6 +233,8 @@ public class VendaService {
         VendaModel vendaExistente = vendaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Venda não encontrada com ID: " + id));
 
+        VendaAuditSnapshot antes = VendaAuditSnapshot.de(vendaExistente);
+
         // Verifica se está tentando cancelar uma venda já cancelada
         if (!vendaExistente.isAtivo() && !vendaAtualizada.isAtivo()) {
             throw new BusinessException("Esta venda já está cancelada.");
@@ -256,7 +262,9 @@ public class VendaService {
             // Marca a venda como cancelada
             vendaExistente.setAtivo(false);
 
-            return vendaRepository.save(vendaExistente);
+            VendaModel salva = vendaRepository.save(vendaExistente);
+            auditoriaService.registrar("VENDA", salva.getId(), AcaoAuditoria.ATUALIZACAO, antes, VendaAuditSnapshot.de(salva));
+            return salva;
         }
 
         // LÓGICA DE ATUALIZAÇÃO NORMAL (se a venda ainda está ativa)
@@ -308,7 +316,9 @@ public class VendaService {
             processarPagamento(vendaExistente);
         }
 
-        return vendaRepository.save(vendaExistente);
+        VendaModel salva = vendaRepository.save(vendaExistente);
+        auditoriaService.registrar("VENDA", salva.getId(), AcaoAuditoria.ATUALIZACAO, antes, VendaAuditSnapshot.de(salva));
+        return salva;
     }
 
     private void validarVenda(VendaModel venda) {
