@@ -3,6 +3,9 @@ package com.example.EstoqueManager.config;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.example.EstoqueManager.exception.BusinessException;
+import com.example.EstoqueManager.exception.ResourceNotFoundException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +18,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 
+@Slf4j
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -54,12 +58,29 @@ public class GlobalExceptionHandler {
 		return new ResponseEntity<Map<String, String>>(erro, HttpStatus.CONFLICT);
 	}
 
+	//TRATAMENTO DE REGRAS DE NEGOCIO (mensagem propositalmente descritiva para o usuario)
+	@ExceptionHandler(BusinessException.class)
+	public ResponseEntity<Map<String, String>> handleBusinessException(BusinessException ex) {
+		Map<String, String> erro = new HashMap<>();
+		erro.put("error", ex.getMessage());
+		return new ResponseEntity<Map<String, String>>(erro, HttpStatus.BAD_REQUEST);
+	}
+
+	//TRATAMENTO DE RECURSO NAO ENCONTRADO
+	@ExceptionHandler(ResourceNotFoundException.class)
+	public ResponseEntity<Map<String, String>> handleResourceNotFound(ResourceNotFoundException ex) {
+		Map<String, String> erro = new HashMap<>();
+		erro.put("error", ex.getMessage());
+		return new ResponseEntity<Map<String, String>>(erro, HttpStatus.NOT_FOUND);
+	}
+
+	//FALLBACK GENERICO: nao expor detalhe interno (stack trace, SQL, etc) ao cliente
 	@ExceptionHandler(Exception.class)
-	public ResponseEntity<String> handle03(Exception ex) {
-		ex.printStackTrace();
-		return new ResponseEntity<String>(ex.getMessage(), HttpStatus.BAD_REQUEST);
+	public ResponseEntity<Map<String, String>> handle03(Exception ex) {
+		log.error("Erro inesperado", ex);
+		Map<String, String> erro = new HashMap<>();
+		erro.put("error", "Ocorreu um erro inesperado. Tente novamente mais tarde.");
+		return new ResponseEntity<Map<String, String>>(erro, HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 
 }
-
-
