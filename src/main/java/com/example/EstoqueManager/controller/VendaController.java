@@ -1,6 +1,7 @@
 package com.example.EstoqueManager.controller;
 
 import com.example.EstoqueManager.dto.VendaRequestDTO;
+import com.example.EstoqueManager.model.Cargo;
 import com.example.EstoqueManager.model.VendaModel;
 import com.example.EstoqueManager.model.UsuarioModel;
 import com.example.EstoqueManager.service.ProdutoService;
@@ -10,7 +11,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -40,13 +43,13 @@ public class VendaController {
     @PostMapping("/venda/save/{usuarioId}")
     public ResponseEntity<VendaModel> criarVenda(
             @PathVariable Long usuarioId,
-            @Valid @RequestBody VendaRequestDTO vendaRequestDTO) {
+            @Valid @RequestBody VendaRequestDTO vendaRequestDTO,
+            @AuthenticationPrincipal UsuarioModel usuarioAutenticado) {
 
-        // Log para debug
-        System.out.println("Recebendo vendaDTO: " + vendaRequestDTO);
-        System.out.println("compradorId: " + vendaRequestDTO.getCompradorId());
-        System.out.println("metodoPagamento: " + vendaRequestDTO.getMetodoPagamento());
-        System.out.println("itens size: " + (vendaRequestDTO.getItens() != null ? vendaRequestDTO.getItens().size() : 0));
+        boolean isAdm = usuarioAutenticado.getCargo() == Cargo.ADM;
+        if (!isAdm && !usuarioAutenticado.getId().equals(usuarioId)) {
+            throw new AccessDeniedException("Voce so pode registrar vendas em seu proprio nome.");
+        }
 
         VendaModel venda = vendaService.criarVendaAPartirDTO(vendaRequestDTO, usuarioId);
 
