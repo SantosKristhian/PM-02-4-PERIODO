@@ -1,6 +1,8 @@
 package com.example.EstoqueManager.service;
 
+import com.example.EstoqueManager.dto.UsuarioResumoDTO;
 import com.example.EstoqueManager.dto.VendaRequestDTO;
+import com.example.EstoqueManager.dto.VendaResponseDTO;
 import com.example.EstoqueManager.exception.BusinessException;
 import com.example.EstoqueManager.exception.ResourceNotFoundException;
 import com.example.EstoqueManager.model.*;
@@ -15,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -406,5 +409,48 @@ public class VendaService {
             produto.setQuantidade(produto.getQuantidade() + itemAntigo.getQuantidadeVendida());
             produtoRepository.save(produto);
         }
+    }
+
+    public VendaResponseDTO converterParaDTO(VendaModel venda) {
+        VendaResponseDTO dto = new VendaResponseDTO();
+        dto.setId(venda.getId());
+        dto.setData(venda.getData());
+        dto.setValortotal(venda.getValortotal());
+        dto.setAtivo(venda.isAtivo());
+        dto.setMetodoPagamento(venda.getMetodoPagamento());
+        dto.setValorPago(venda.getValorPago());
+        dto.setTroco(venda.getTroco());
+        dto.setItensDevolvidos(venda.getItensDevolvidos());
+
+        if (venda.getUsuario() != null) {
+            dto.setUsuario(new UsuarioResumoDTO(venda.getUsuario().getId(), venda.getUsuario().getNome()));
+        }
+
+        if (venda.getComprador() != null) {
+            VendaResponseDTO.CompradorResumoDTO compradorDTO = new VendaResponseDTO.CompradorResumoDTO();
+            compradorDTO.setId(venda.getComprador().getId());
+            compradorDTO.setNome(venda.getComprador().getNome());
+            dto.setComprador(compradorDTO);
+        }
+
+        if (venda.getItens() != null) {
+            dto.setItens(venda.getItens().stream().map(item -> {
+                VendaResponseDTO.ItemVendaResumoDTO itemDTO = new VendaResponseDTO.ItemVendaResumoDTO();
+                itemDTO.setId(item.getId());
+                itemDTO.setQuantidadeVendida(item.getQuantidadeVendida());
+                itemDTO.setPrecoVendido(item.getPrecoVendido());
+
+                if (item.getProduto() != null) {
+                    VendaResponseDTO.ProdutoResumoDTO produtoDTO = new VendaResponseDTO.ProdutoResumoDTO();
+                    produtoDTO.setId(item.getProduto().getId());
+                    produtoDTO.setNome(item.getProduto().getNome());
+                    itemDTO.setProduto(produtoDTO);
+                }
+
+                return itemDTO;
+            }).collect(Collectors.toList()));
+        }
+
+        return dto;
     }
 }
