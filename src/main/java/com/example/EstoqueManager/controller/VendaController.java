@@ -1,6 +1,8 @@
 package com.example.EstoqueManager.controller;
 
 import com.example.EstoqueManager.dto.VendaRequestDTO;
+import com.example.EstoqueManager.dto.VendaResponseDTO;
+import com.example.EstoqueManager.model.Cargo;
 import com.example.EstoqueManager.model.VendaModel;
 import com.example.EstoqueManager.model.UsuarioModel;
 import com.example.EstoqueManager.service.ProdutoService;
@@ -10,14 +12,19 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/emanager")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*", allowedHeaders = "*", allowCredentials = "false")
+@PreAuthorize("hasAnyAuthority('ADM','VENDEDOR')")
 public class VendaController {
 
     private final VendaService vendaService;
@@ -26,36 +33,41 @@ public class VendaController {
 
 
     @GetMapping("/venda/findAll")
-    public ResponseEntity<List<VendaModel>> findAll() {
-        return ResponseEntity.ok(vendaService.listarVendas());
+    public ResponseEntity<List<VendaResponseDTO>> findAll() {
+        List<VendaResponseDTO> vendas = vendaService.listarVendas().stream()
+                .map(vendaService::converterParaDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(vendas);
     }
 
     @GetMapping("/venda/findById/{id}")
-    public ResponseEntity<VendaModel> findById(@PathVariable Long id) {
-        return ResponseEntity.ok(vendaService.buscarVendaPorId(id));
+    public ResponseEntity<VendaResponseDTO> findById(@PathVariable Long id) {
+        VendaModel venda = vendaService.buscarVendaPorId(id);
+        return ResponseEntity.ok(vendaService.converterParaDTO(venda));
     }
 
     @PostMapping("/venda/save/{usuarioId}")
-    public ResponseEntity<VendaModel> criarVenda(
+    public ResponseEntity<VendaResponseDTO> criarVenda(
             @PathVariable Long usuarioId,
-            @Valid @RequestBody VendaRequestDTO vendaRequestDTO) {
+            @Valid @RequestBody VendaRequestDTO vendaRequestDTO,
+            @AuthenticationPrincipal UsuarioModel usuarioAutenticado) {
 
-        // Log para debug
-        System.out.println("Recebendo vendaDTO: " + vendaRequestDTO);
-        System.out.println("compradorId: " + vendaRequestDTO.getCompradorId());
-        System.out.println("metodoPagamento: " + vendaRequestDTO.getMetodoPagamento());
-        System.out.println("itens size: " + (vendaRequestDTO.getItens() != null ? vendaRequestDTO.getItens().size() : 0));
+        boolean isAdm = usuarioAutenticado.getCargo() == Cargo.ADM;
+        if (!isAdm && !usuarioAutenticado.getId().equals(usuarioId)) {
+            throw new AccessDeniedException("Voce so pode registrar vendas em seu proprio nome.");
+        }
 
         VendaModel venda = vendaService.criarVendaAPartirDTO(vendaRequestDTO, usuarioId);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(venda);
+        return ResponseEntity.status(HttpStatus.CREATED).body(vendaService.converterParaDTO(venda));
     }
 
     @PutMapping("/venda/update/{id}")
-    public ResponseEntity<VendaModel> updateVenda(
+    public ResponseEntity<VendaResponseDTO> updateVenda(
             @PathVariable Long id,
             @Valid @RequestBody VendaModel vendaAtualizada) {
 
-        return ResponseEntity.ok(vendaService.updateVenda(id, vendaAtualizada));
+        VendaModel venda = vendaService.updateVenda(id, vendaAtualizada);
+        return ResponseEntity.ok(vendaService.converterParaDTO(venda));
     }
 }

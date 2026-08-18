@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 import com.example.EstoqueManager.model.UsuarioModel;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -19,11 +20,12 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 
 @Service
-public class JwtServiceGenerator {  
+public class JwtServiceGenerator {
 
 	///////////////////////////////////////////////////////
 	//Parâmetros para geração do token
-	public static final String SECRET_KEY = "UMACHAVESECRETADASUAAPIAQUIUMACHAVESECRETADASUAAPIAQUIUMACHAVESECRETADASUAAPIAQUIUMACHAVESECRETADASUAAPIAQUI";
+	@Value("${jwt.secret}")
+	private String secretKey;
 	public static final SignatureAlgorithm ALGORITMO_ASSINATURA = SignatureAlgorithm.HS256;
 	public static final int HORAS_EXPIRACAO_TOKEN = 1;
 
@@ -84,7 +86,7 @@ public class JwtServiceGenerator {
 	}
 
 	private Key getSigningKey() {
-		byte[] keyBytes = Decoders.BASE64.decode(this.SECRET_KEY);
+		byte[] keyBytes = Decoders.BASE64.decode(this.secretKey);
 		return Keys.hmacShaKeyFor(keyBytes);
 	}
 

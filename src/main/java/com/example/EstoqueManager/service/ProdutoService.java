@@ -2,8 +2,10 @@ package com.example.EstoqueManager.service;
 
 import com.example.EstoqueManager.dto.ProdutoCurvaABCDTO;
 import com.example.EstoqueManager.dto.ProdutoResponseDTO;
+import com.example.EstoqueManager.dto.auditoria.ProdutoAuditSnapshot;
 import com.example.EstoqueManager.exception.BusinessException;
 import com.example.EstoqueManager.exception.ResourceNotFoundException;
+import com.example.EstoqueManager.model.AcaoAuditoria;
 import com.example.EstoqueManager.model.ItemVendaModel;
 import com.example.EstoqueManager.model.ProdutoModel;
 import com.example.EstoqueManager.model.UsuarioModel;
@@ -26,6 +28,7 @@ public class ProdutoService {
     private final ProdutoRepository produtoRepository;
     private final CategoriaRepository categoriaRepository;
     private final ItemVendaRepository itemVendaRepository;
+    private final AuditoriaService auditoriaService;
 
     public List<ProdutoModel> findAll() {
         return produtoRepository.findAll();
@@ -121,7 +124,9 @@ public class ProdutoService {
         produto.setDataUltimaAlteracao(LocalDateTime.now());
         produto.setAtivo(true); // Define como ativo ao criar
 
-        return produtoRepository.save(produto);
+        ProdutoModel salvo = produtoRepository.save(produto);
+        auditoriaService.registrar("PRODUTO", salvo.getId(), AcaoAuditoria.CRIACAO, null, ProdutoAuditSnapshot.de(salvo));
+        return salvo;
     }
 
     public ProdutoModel updateByID(Long id, ProdutoModel produtoUpdated, UsuarioModel usuario) {
@@ -142,6 +147,8 @@ public class ProdutoService {
             throw new ResourceNotFoundException("Categoria não encontrada com ID: " + produtoUpdated.getCategoria().getId());
         }
 
+        ProdutoAuditSnapshot antes = ProdutoAuditSnapshot.de(produtoExistente);
+
         produtoExistente.setNome(produtoUpdated.getNome());
         produtoExistente.setQuantidade(produtoUpdated.getQuantidade());
         produtoExistente.setPreco(produtoUpdated.getPreco());
@@ -150,7 +157,9 @@ public class ProdutoService {
         produtoExistente.setUsuarioUltimaAlteracao(usuario);
         produtoExistente.setDataUltimaAlteracao(LocalDateTime.now());
 
-        return produtoRepository.save(produtoExistente);
+        ProdutoModel salvo = produtoRepository.save(produtoExistente);
+        auditoriaService.registrar("PRODUTO", salvo.getId(), AcaoAuditoria.ATUALIZACAO, antes, ProdutoAuditSnapshot.de(salvo));
+        return salvo;
     }
 
     public void deleteById(Long id) {
@@ -161,6 +170,8 @@ public class ProdutoService {
         ProdutoModel produto = produtoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Produto não encontrado com ID: " + id));
 
+        ProdutoAuditSnapshot antes = ProdutoAuditSnapshot.de(produto);
+
         // Verifica se o produto está em alguma venda
         boolean produtoEmUso = itemVendaRepository.findAll().stream()
                 .anyMatch(item -> item.getProduto().getId().equals(id));
@@ -169,10 +180,12 @@ public class ProdutoService {
             // Soft delete - marca como inativo ao invés de deletar
             produto.setAtivo(false);
             produto.setDataUltimaAlteracao(LocalDateTime.now());
-            produtoRepository.save(produto);
+            ProdutoModel salvo = produtoRepository.save(produto);
+            auditoriaService.registrar("PRODUTO", id, AcaoAuditoria.ATUALIZACAO, antes, ProdutoAuditSnapshot.de(salvo));
         } else {
             // Hard delete - deleta realmente se não está em nenhuma venda
             produtoRepository.deleteById(id);
+            auditoriaService.registrar("PRODUTO", id, AcaoAuditoria.EXCLUSAO, antes, null);
         }
     }
 

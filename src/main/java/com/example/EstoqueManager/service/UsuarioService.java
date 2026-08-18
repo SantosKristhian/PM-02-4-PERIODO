@@ -1,7 +1,10 @@
 package com.example.EstoqueManager.service;
 
+import com.example.EstoqueManager.dto.UsuarioResumoDTO;
+import com.example.EstoqueManager.dto.auditoria.UsuarioAuditSnapshot;
 import com.example.EstoqueManager.exception.BusinessException;
 import com.example.EstoqueManager.exception.ResourceNotFoundException;
+import com.example.EstoqueManager.model.AcaoAuditoria;
 import com.example.EstoqueManager.model.Cargo;
 import com.example.EstoqueManager.model.UsuarioModel;
 import com.example.EstoqueManager.repository.UsuarioRepository;
@@ -17,6 +20,7 @@ public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuditoriaService auditoriaService;
 
     UsuarioModel autenticar(String login, String senha) {
         UsuarioModel usuario = usuarioRepository.findByLogin(login);
@@ -36,6 +40,12 @@ public class UsuarioService {
 
     public List<UsuarioModel> findAll() {
         return usuarioRepository.findAll();
+    }
+
+    public List<UsuarioResumoDTO> findAllResumido() {
+        return usuarioRepository.findAll().stream()
+                .map(u -> new UsuarioResumoDTO(u.getId(), u.getNome()))
+                .toList();
     }
 
     public UsuarioModel findById(Long id) {
@@ -61,7 +71,9 @@ public class UsuarioService {
 
         usuario.setSenha(passwordEncoder.encode(usuario.getSenha()));
 
-        return usuarioRepository.save(usuario);
+        UsuarioModel salvo = usuarioRepository.save(usuario);
+        auditoriaService.registrar("USUARIO", salvo.getId(), AcaoAuditoria.CRIACAO, null, UsuarioAuditSnapshot.de(salvo));
+        return salvo;
     }
 
     public void deleteById(Long id) {
@@ -69,11 +81,11 @@ public class UsuarioService {
             throw new BusinessException("ID inválido. Deve ser um número positivo.");
         }
 
-        if (!usuarioRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Usuário não encontrado com ID: " + id);
-        }
+        UsuarioModel usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com ID: " + id));
 
         usuarioRepository.deleteById(id);
+        auditoriaService.registrar("USUARIO", id, AcaoAuditoria.EXCLUSAO, UsuarioAuditSnapshot.de(usuario), null);
     }
 
     public UsuarioModel updateByID(Long id, UsuarioModel usuarioUpdated) {
@@ -93,13 +105,18 @@ public class UsuarioService {
             }
         }
 
+        UsuarioAuditSnapshot antes = UsuarioAuditSnapshot.de(usuarioExistente);
+
         usuarioExistente.setNome(usuarioUpdated.getNome());
         usuarioExistente.setCpf(usuarioUpdated.getCpf());
         usuarioExistente.setIdade(usuarioUpdated.getIdade());
         usuarioExistente.setLogin(usuarioUpdated.getLogin());
         usuarioExistente.setSenha(passwordEncoder.encode(usuarioUpdated.getSenha()));
         usuarioExistente.setCargo(usuarioUpdated.getCargo());
-        return usuarioRepository.save(usuarioExistente);
+
+        UsuarioModel salvo = usuarioRepository.save(usuarioExistente);
+        auditoriaService.registrar("USUARIO", salvo.getId(), AcaoAuditoria.ATUALIZACAO, antes, UsuarioAuditSnapshot.de(salvo));
+        return salvo;
     }
 
     private void validarUsuario(UsuarioModel usuario) {
