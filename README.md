@@ -15,6 +15,39 @@ Projeto se trata de um sistem de gerenciamento de estoque, feito em JAVA + Sprin
 
 ---------------------------------------------------------------------------
 
+## Como rodar (Docker Compose)
+
+Sobe backend + frontend + MySQL com um único comando, sem depender de IP fixo de rede.
+
+### Pré-requisitos
+
+- Docker Desktop instalado e rodando.
+- O repositório do frontend clonado como pasta **irmã** deste repositório:
+
+```
+IdeaProjects/
+├── estoquemanager-backend/   (este repositório)
+└── estoquemanager-frontend/  (https://github.com/SantosKristhian/PM-02-4-PERIODO-FRONT)
+```
+
+### Passos
+
+1. Copie `.env.example` para `.env` nesta pasta e preencha as senhas e o `JWT_SECRET` (gere um com `openssl rand -base64 32`).
+2. Suba a stack:
+   ```bash
+   docker compose up -d --build
+   ```
+3. Acesse o frontend em `http://localhost:8081` (porta configurável via `FRONTEND_PORT` no `.env`).
+4. O banco é vazio na primeira execução - não há tela de primeiro acesso ainda, então é preciso criar o usuário administrador inicial direto no banco:
+   ```bash
+   docker compose exec database mysql -uroot -p"$DB_ROOT_PASSWORD" estoquemanagerdb -e \
+     "INSERT INTO usuario_table (nome, cpf, idade, login, senha, cargo) VALUES ('Admin', '00000000000', 30, 'admin', '<hash bcrypt>', 'ADM');"
+   ```
+   O campo `senha` precisa ser um hash bcrypt (o mesmo formato usado pelo Spring Security). Os dados ficam persistidos em um volume Docker nomeado (`mysql_data`) e sobrevivem a `docker compose down` / `up` - só se perdem com `docker compose down -v`.
+5. Para derrubar tudo: `docker compose down` (ou `down -v` para apagar também os dados do banco).
+
+---------------------------------------------------------------------------
+
 # Inventory and Sales Management System
 ## Java + Spring Boot application for managing the inventory and sales of a motorcycle shop.
 
