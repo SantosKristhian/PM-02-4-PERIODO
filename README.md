@@ -19,18 +19,11 @@ Projeto se trata de um sistem de gerenciamento de estoque, feito em JAVA + Sprin
 
 ## Como rodar (Docker Compose)
 
-Sobe backend + frontend + MySQL com um único comando, sem depender de IP fixo de rede.
+Sobe backend + frontend + MySQL com um único comando, sem depender de IP fixo de rede. As imagens de backend e frontend são publicadas automaticamente no Docker Hub ([santoskristhian/estoquemanager-backend](https://hub.docker.com/r/santoskristhian/estoquemanager-backend), [santoskristhian/estoquemanager-frontend](https://hub.docker.com/r/santoskristhian/estoquemanager-frontend)) - **não precisa clonar o repositório do frontend nem ter código-fonte nenhum pra rodar**, só este arquivo `docker-compose.yml` + `.env`.
 
 ### Pré-requisitos
 
 - Docker Desktop instalado e rodando.
-- O repositório do frontend clonado como pasta **irmã** deste repositório:
-
-```
-IdeaProjects/
-├── estoquemanager-backend/   (este repositório)
-└── estoquemanager-frontend/  (https://github.com/SantosKristhian/PM-02-4-PERIODO-FRONT)
-```
 
 ### Passos
 
@@ -40,8 +33,9 @@ IdeaProjects/
    - `ADMIN_LOGIN`/`ADMIN_PASSWORD` (opcional) - veja o item 4 abaixo.
 2. Suba a stack:
    ```bash
-   docker compose up -d --build
+   docker compose up -d
    ```
+   Isso puxa as imagens já publicadas no Docker Hub, não builda nada local.
 3. Acesse o frontend em `http://localhost:8081` (porta configurável via `FRONTEND_PORT` no `.env`).
 4. **Primeiro acesso**: se o banco estiver vazio (primeira subida, ou depois de um `down -v`), a aplicação cria um usuário ADM automaticamente e mostra a senha no log:
    ```bash
@@ -55,9 +49,22 @@ IdeaProjects/
 Pra garantir um estado limpo de verdade, use um comando só:
 ```bash
 docker compose down -v
-docker compose up -d --build
+docker compose up -d
 ```
-`down -v` remove containers, rede **e** os volumes do compose (perde os dados do banco). Sem o `-v`, `docker compose down` remove só containers/rede e mantém os dados. `--build` sempre reconstrói as imagens a partir do Dockerfile/código atual, então não é preciso apagar imagem manualmente pra pegar uma mudança de código.
+`down -v` remove containers, rede **e** os volumes do compose (perde os dados do banco). Sem o `-v`, `docker compose down` remove só containers/rede e mantém os dados.
+
+### Modo desenvolvimento (buildar do código local em vez de puxar do Hub)
+
+Por padrão o compose usa as imagens publicadas no Docker Hub (`latest`), não o código que está no seu disco. Se você está desenvolvendo e quer testar uma mudança que ainda não foi publicada:
+
+1. Copie `docker-compose.override.yml.example` para `docker-compose.override.yml` (não é commitado, é ajuste local).
+2. Clone o repositório do frontend como pasta **irmã** deste:
+   ```
+   IdeaProjects/
+   ├── estoquemanager-backend/   (este repositório)
+   └── estoquemanager-frontend/  (https://github.com/SantosKristhian/PM-02-4-PERIODO-FRONT)
+   ```
+3. Suba com `docker compose up -d --build` - o Compose junta automaticamente o `docker-compose.yml` com o `docker-compose.override.yml` (não precisa passar nenhuma flag `-f`), e builda local em vez de puxar do Hub.
 
 ---------------------------------------------------------------------------
 

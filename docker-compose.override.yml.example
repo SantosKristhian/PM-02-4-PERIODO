@@ -1,0 +1,24 @@
+# Copie este arquivo para "docker-compose.override.yml" (mesma pasta) para
+# buildar as imagens a partir do codigo-fonte local, em vez de so puxar do
+# Docker Hub - util durante o desenvolvimento, quando voce quer testar
+# uma mudanca que ainda nao foi publicada.
+#
+# Com build + image definidos juntos (este arquivo + o docker-compose.yml
+# combinados), rodar "docker compose up --build" builda local e usa o
+# mesmo nome de tag; sem esse arquivo, "docker compose up" so puxa a
+# imagem pronta do Docker Hub.
+#
+# Requer o repositorio do frontend clonado como pasta irma deste
+# repositorio (veja o README).
+#
+# O "docker-compose.override.yml" nao deve ser commitado - fica de fora
+# do git (.gitignore) porque e um ajuste local, especifico da sua maquina.
+
+services:
+  backend:
+    build:
+      context: .
+
+  frontend:
+    build:
+      context: ../estoquemanager-frontend

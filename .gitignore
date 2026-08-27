@@ -5,6 +5,9 @@ target/
 .env
 .env.local
 
+# Ajuste local do compose (buildar de codigo-fonte em vez de puxar do Hub)
+docker-compose.override.yml
+
 # IDE
 .idea/
 *.iml
