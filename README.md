@@ -1,5 +1,7 @@
 # Sistema de gerenciamento de estoque e vendas   
 
+[![Docker Publish](https://github.com/SantosKristhian/PM-02-4-PERIODO/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/SantosKristhian/PM-02-4-PERIODO/actions/workflows/docker-publish.yml)
+
 ## Aplicação desenvolvida em Java+Springboot para controle de estoque e vendas de uma loja de motos.
 
 Projeto se trata de um sistem de gerenciamento de estoque, feito em JAVA + Springboot, com o objetivo de suprir a demanda de uma aplicação que contivesse a regra de negócio CurvaABC. Para isso foi implementado também, um sistema de vendas completo.
